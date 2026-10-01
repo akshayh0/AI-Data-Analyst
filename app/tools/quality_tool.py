@@ -105,6 +105,11 @@ def generate_quality_report(df: pd.DataFrame, table_name: str) -> Tuple[str, pd.
     warn_count = sum(1 for item in issues if item["status"] == "WARN")
     health_score = max(0, 100 - (fail_count * 20) - (warn_count * 5))
 
+    quality_df.attrs["health_score"] = health_score
+    quality_df.attrs["fail_count"] = fail_count
+    quality_df.attrs["warn_count"] = warn_count
+    quality_df.attrs["total_rows"] = total_rows
+
     lines = [
         f"### Data Quality Health Report: `{table_name}`",
         f"- **Overall Health Score**: **{health_score}/100**",

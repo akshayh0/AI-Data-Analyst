@@ -399,4 +399,33 @@ def test_unsupported_number_flagging():
     result = agent.ask("Check numbers")
     assert "99999" in result.unsupported_numbers
     assert "500" in result.unsupported_numbers
-    assert "Data Grounding Warning" in result.answer
+    assert "could not be verified directly against query results" in result.answer
+
+def test_verify_answer_numbers_variations():
+    """Verify answer number verification handles abbreviations ($1.2M), percentages, dates, and rounding."""
+    from app.agent import verify_answer_numbers
+
+    df = pd.DataFrame({
+        "revenue": [1_200_000.0],
+        "profit_margin": [0.45],
+        "exact_profit": [1234.56],
+        "unit_count": [1500.0],
+    })
+
+    # Test valid representations that should NOT be flagged as unsupported:
+    # 1. $1.2M represents 1,200,000.0
+    # 2. 45% represents 0.45
+    # 3. 2024 is a calendar year
+    # 4. 1235 is 1234.56 rounded
+    # 5. 1.5K represents 1500.0
+    valid_text = "In 2024, total revenue reached $1.2M with a 45% margin, generating 1235 in profit across 1.5K units."
+    unsupported = verify_answer_numbers(valid_text, df)
+    assert unsupported == [], f"Expected no unsupported numbers, but got: {unsupported}"
+
+    # Test hallucinated / unsupported numbers
+    hallucinated_text = "Revenue was $9.8M with an abnormal 88% margin in 2024."
+    unsupported_bad = verify_answer_numbers(hallucinated_text, df)
+    assert any("9.8M" in s or "9.8" in s for s in unsupported_bad)
+    assert any("88%" in s or "88" in s for s in unsupported_bad)
+    assert "2024" not in unsupported_bad  # Year should still be excluded
+

@@ -1,0 +1,21 @@
+# Git & environment files
+.git
+.gitignore
+.env
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Testing & cache artifacts
+.pytest_cache
+.coverage
+htmlcov
+
+# Logs and local IDE state
+logs/
+.vscode
+.idea
+*.log

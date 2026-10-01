@@ -1,0 +1,38 @@
+[
+  {
+    "question_index": 1,
+    "question": "Which region generated the highest revenue?",
+    "status": "FAILED",
+    "error": "name 'TokenUsage' is not defined"
+  },
+  {
+    "question_index": 2,
+    "question": "Show monthly sales trends.",
+    "status": "FAILED",
+    "error": "name 'TokenUsage' is not defined"
+  },
+  {
+    "question_index": 3,
+    "question": "Which products are underperforming?",
+    "status": "FAILED",
+    "error": "name 'TokenUsage' is not defined"
+  },
+  {
+    "question_index": 4,
+    "question": "What are the top five customers?",
+    "status": "FAILED",
+    "error": "name 'TokenUsage' is not defined"
+  },
+  {
+    "question_index": 5,
+    "question": "Generate SQL for this analysis.",
+    "status": "FAILED",
+    "error": "name 'TokenUsage' is not defined"
+  },
+  {
+    "question_index": 6,
+    "question": "Detect anomalies in the dataset.",
+    "status": "FAILED",
+    "error": "name 'TokenUsage' is not defined"
+  }
+]

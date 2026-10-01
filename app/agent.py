@@ -36,37 +36,83 @@ def verify_answer_numbers(text: str, result_df: Optional[pd.DataFrame]) -> List[
     """
     Extract numbers mentioned in the answer and verify whether they exist
     in the tool output DataFrame. Returns any unsupported numbers.
+
+    Supports:
+    - Suffix abbreviations: $1.2M -> 1,200,000, 1.5K -> 1,500, 2B -> 2,000,000,000
+    - Percentages: 45% -> 0.45 and 45.0
+    - Calendar years and dates: 1900-2050, YYYY-MM-DD
+    - Rounding: within 1.5% relative tolerance or rounded integers
     """
-    # Remove commas in numbers (e.g. 1,450.00 -> 1450.00)
     cleaned = re.sub(r"(?<=\d),(?=\d)", "", text)
-    tokens = re.findall(r"\b\d+\.?\d*\b", cleaned)
 
     # Gather numeric values from result_df if provided
-    df_numbers: Set[float] = set()
+    df_numbers: List[float] = []
     if result_df is not None and not result_df.empty:
         for col in result_df.columns:
             for val in result_df[col].dropna():
                 try:
-                    num = float(val)
-                    df_numbers.add(round(num, 2))
-                    df_numbers.add(float(int(num)))
+                    df_numbers.append(float(val))
                 except (ValueError, TypeError):
                     pass
 
-    # Exclude common small counting numbers and current calendar years
-    safe_common = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 100.0, 2023.0, 2024.0, 2025.0, 2026.0}
-    unsupported = []
+    # Match tokens with optional $, K, M, B, % suffixes
+    pattern = r"\$?\b(\d+(?:\.\d+)?)\s*([KkMmBb%])?\b"
+    raw_matches = re.findall(pattern, cleaned)
 
-    for token in tokens:
+    safe_common = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0}
+    unsupported: List[str] = []
+
+    for num_str, suffix in raw_matches:
         try:
-            val = float(token)
-            if val in safe_common:
-                continue
-            if round(val, 2) not in df_numbers and float(int(val)) not in df_numbers:
-                norm_str = str(int(val)) if val.is_integer() else token
-                unsupported.append(norm_str)
+            base_val = float(num_str)
         except ValueError:
             continue
+
+        # Exclude calendar years (1900 - 2050)
+        if not suffix and base_val.is_integer() and 1900 <= base_val <= 2050:
+            continue
+
+        # Exclude small counting numbers
+        if not suffix and base_val in safe_common:
+            continue
+
+        # Determine candidate numeric values
+        candidates: List[float] = []
+        suffix_lower = suffix.lower() if suffix else ""
+        if suffix_lower == "k":
+            candidates.extend([base_val * 1_000.0, base_val])
+        elif suffix_lower == "m":
+            candidates.extend([base_val * 1_000_000.0, base_val])
+        elif suffix_lower == "b":
+            candidates.extend([base_val * 1_000_000_000.0, base_val])
+        elif suffix_lower == "%":
+            candidates.extend([base_val / 100.0, base_val])
+        else:
+            candidates.extend([base_val, base_val / 100.0, base_val * 100.0])
+
+        matched = False
+        if df_numbers:
+            for cand in candidates:
+                for target in df_numbers:
+                    # Exact or rounded to 2 decimals
+                    if round(cand, 2) == round(target, 2):
+                        matched = True
+                        break
+                    # Rounded integer match (e.g. 1235 vs 1234.56)
+                    if round(cand) == round(target):
+                        matched = True
+                        break
+                    # Within 1.5% relative tolerance (rounding / approximation)
+                    rel_diff = abs(cand - target) / max(abs(target), 1.0)
+                    if rel_diff <= 0.015:
+                        matched = True
+                        break
+                if matched:
+                    break
+
+        if not matched:
+            display_token = f"{num_str}{suffix}" if suffix else (str(int(base_val)) if base_val.is_integer() else num_str)
+            unsupported.append(display_token)
 
     return list(dict.fromkeys(unsupported))
 
@@ -251,7 +297,7 @@ class DataAnalystAgent:
 
         if unsupported:
             parts.append(
-                f"> [!CAUTION]\n> **Data Grounding Warning**: The following numbers quoted in the answer could not be verified in the query result: {', '.join(unsupported)}.\n"
+                f"> Note: The following numbers could not be verified directly against query results: {', '.join(unsupported)}.\n"
             )
 
         full_formatted = "\n".join(parts)
