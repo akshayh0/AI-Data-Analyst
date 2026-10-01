@@ -109,3 +109,14 @@ result = np.zeros((100000, 100000), dtype=np.float64)
 """
     with pytest.raises(PandasSandboxError):
         execute_sandboxed_pandas(code, sample_dfs, timeout_seconds=3)
+
+def test_subprocess_loop_memory_allocation_rejection(sample_dfs):
+    code = """
+# Attempt continuous memory allocation in a loop
+chunks = []
+for i in range(100):
+    chunks.append(np.ones((2000, 2000), dtype=np.float64))
+result = sales
+"""
+    with pytest.raises(PandasSandboxError):
+        execute_sandboxed_pandas(code, sample_dfs, timeout_seconds=3)

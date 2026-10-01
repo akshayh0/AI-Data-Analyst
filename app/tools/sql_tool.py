@@ -32,13 +32,13 @@ class QueryResult:
     llm_preview_df: pd.DataFrame
     chart_df: pd.DataFrame
 
-# Whitelist of allowed SQL functions (Aggregates, Math, Date/Time, String, Window, Conditionals)
+# Comprehensive Whitelist of allowed SQL functions (Aggregates, Math, Date/Time, String, Window, Conditionals)
 ALLOWED_SQL_FUNCTIONS: Set[str] = {
-    # Aggregates
+    # Aggregates & Statistics
     "sum", "avg", "mean", "count", "min", "max", "stddev", "stddev_pop", "stddev_samp",
     "var_pop", "var_samp", "variance", "median", "mode", "quantile_cont", "quantile_disc",
     "approx_count_distinct", "string_agg", "group_concat", "array_agg", "list", "first",
-    "last", "any_value",
+    "last", "any_value", "corr", "covar_pop", "covar_samp", "regr_slope", "regr_r2",
     # Math & Numeric
     "round", "floor", "ceil", "ceiling", "abs", "sign", "sqrt", "power", "pow", "exp",
     "ln", "log", "log10", "log2", "mod", "pi", "degrees", "radians", "cos", "sin", "tan",
@@ -57,8 +57,45 @@ ALLOWED_SQL_FUNCTIONS: Set[str] = {
     "row_number", "rank", "dense_rank", "percent_rank", "cume_dist", "ntile", "lag",
     "lead", "first_value", "last_value", "nth_value",
     # Conditionals & Casting
-    "coalesce", "nullif", "ifnull", "nvl", "cast", "try_cast", "typeof",
+    "coalesce", "nullif", "ifnull", "nvl", "cast", "try_cast", "typeof", "case", "when",
+    "then", "else", "end",
 }
+
+# sqlglot typed nodes that are intrinsically safe and standard SQL operations
+TYPED_SAFE_NODES = (
+    exp.Cast,
+    exp.TryCast,
+    exp.Case,
+    exp.If,
+    exp.Coalesce,
+    exp.Extract,
+    exp.Substring,
+    exp.Length,
+    exp.Round,
+    exp.Floor,
+    exp.Ceil,
+    exp.Abs,
+    exp.Sqrt,
+    exp.Ln,
+    exp.Exp,
+    exp.Pow,
+    exp.Count,
+    exp.Sum,
+    exp.Avg,
+    exp.Min,
+    exp.Max,
+    exp.Distinct,
+    exp.DateTrunc,
+    exp.DateAdd,
+    exp.DateDiff,
+    exp.Window,
+    exp.Corr,
+    exp.Star,
+    exp.Nullif,
+    exp.CurrentDate,
+    exp.CurrentTime,
+    exp.CurrentTimestamp,
+)
 
 FORBIDDEN_AST_NODES = (
     exp.Insert,
@@ -73,11 +110,11 @@ FORBIDDEN_AST_NODES = (
     exp.Copy,
 )
 
-def validate_sql_security(sql: str) -> exp.Expression:
+def validate_sql_security(sql: str, allowed_tables: Optional[Set[str]] = None) -> exp.Expression:
     """
     Parse and inspect an SQL query using sqlglot to enforce strict read-only execution.
     Only a single SELECT or WITH CTE statement is permitted.
-    All DDL, DML, replacement scans, file access, and non-whitelisted functions are rejected.
+    All DDL, DML, replacement scans, file access, internal system tables, and non-whitelisted functions are rejected.
     """
     clean_sql = sql.strip()
     if not clean_sql:
@@ -107,6 +144,14 @@ def validate_sql_security(sql: str) -> exp.Expression:
             f"Unauthorized statement type '{type(stmt).__name__}'. Only SELECT or WITH queries are permitted."
         )
 
+    # Extract CTE aliases
+    cte_names: Set[str] = set()
+    with_node = stmt.args.get("with")
+    if with_node:
+        for cte in with_node.expressions:
+            if cte.alias:
+                cte_names.add(cte.alias.lower())
+
     # Inspect all child AST nodes (traversing subqueries, CTEs, expressions)
     for node in stmt.walk():
         # Block forbidden statement/command nodes
@@ -122,10 +167,18 @@ def validate_sql_security(sql: str) -> exp.Expression:
                 f"Forbidden SQL file operation detected: '{type(node).__name__}'. External file access is disabled."
             )
 
-        # Inspect table targets to prevent replacement scans and file paths
+        # Inspect table targets
         if isinstance(node, exp.Table):
             table_target = str(node.this) if node.this else ""
             table_clean = table_target.strip("`'\" ").lower()
+
+            # Check database catalog name
+            db_name = (node.db or "").strip("`'\" ").lower()
+            if db_name in {"information_schema", "pg_catalog"} or table_clean.startswith("information_schema"):
+                raise SQLSecurityError("Access to information_schema or system catalogs is forbidden.")
+
+            if table_clean.startswith("duckdb_") or table_clean.startswith("pragma_"):
+                raise SQLSecurityError(f"Access to internal function/table '{table_clean}' is forbidden.")
 
             # Detect file extensions or path separators in table name (replacement scan)
             if any(sep in table_target for sep in ["/", "\\", "."]) or table_clean.endswith(".csv") or table_clean.endswith(".parquet"):
@@ -142,8 +195,16 @@ def validate_sql_security(sql: str) -> exp.Expression:
                     f"Forbidden external file reference detected: '{table_clean}'."
                 )
 
-        # Inspect function calls against the strict function allowlist
-        if isinstance(node, (exp.Anonymous, exp.Func)) and not isinstance(node, exp.Star):
+            # Check table against allowed registered tables + CTEs
+            if allowed_tables is not None:
+                valid_tables = {t.lower() for t in allowed_tables} | cte_names
+                if table_clean and table_clean not in valid_tables:
+                    raise SQLSecurityError(
+                        f"Access to table '{table_clean}' is not permitted. Only uploaded datasets ({', '.join(sorted(allowed_tables))}) are accessible."
+                    )
+
+        # Inspect function calls (skip intrinsic typed safe nodes like Cast, Case, Coalesce, Star)
+        if isinstance(node, (exp.Anonymous, exp.Func)) and not isinstance(node, TYPED_SAFE_NODES):
             func_name = (node.name or getattr(node, "key", "")).strip("`'\" ").lower()
             if not func_name or func_name == "*":
                 continue
@@ -217,18 +278,16 @@ class DuckDBManager:
         timeout_seconds: Optional[int] = None,
     ) -> QueryResult:
         """
-        Validate, apply safety limits, and execute an SQL query.
-
-        Returns:
-            QueryResult containing the DataFrame, SQL, truncation info, LLM preview, and chart DataFrame.
+        Validate, apply safety limits, and execute an SQL query against registered tables.
         """
         if max_rows is None:
             max_rows = settings.max_preview_rows
         if timeout_seconds is None:
             timeout_seconds = settings.query_timeout_seconds
 
-        # 1. Validate AST and safety rules
-        stmt = validate_sql_security(query)
+        # 1. Validate AST, safety rules, and registered table access
+        allowed_tables = set(self._registered_tables.keys()) if self._registered_tables else None
+        stmt = validate_sql_security(query, allowed_tables=allowed_tables)
 
         # 2. Check if user specified a limit
         user_limit_node = stmt.find(exp.Limit)
