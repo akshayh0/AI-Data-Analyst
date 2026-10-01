@@ -31,6 +31,7 @@ class AgentTurnResult:
     tool_calls_made: List[str] = field(default_factory=list)
     iterations_used: int = 0
     total_tokens_used: int = 0
+    execution_time_ms: float = 0.0
 
 def verify_answer_numbers(text: str, result_df: Optional[pd.DataFrame]) -> List[str]:
     """
@@ -137,6 +138,7 @@ class DataAnalystAgent:
         self.last_sql: Optional[str] = None
         self.last_pandas: Optional[str] = None
         self.last_chart_spec: Optional[Dict[str, Any]] = None
+        self.last_execution_time_ms: float = 0.0
 
         # Initialize system prompt
         self._system_prompt = build_system_prompt(self.table_profiles)
@@ -171,6 +173,7 @@ class DataAnalystAgent:
                 res = self.db.execute_query(query)
                 self.last_result_df = res.df
                 self.last_sql = res.sql
+                self.last_execution_time_ms = res.execution_time_ms
                 formatted = self._truncate_df_for_llm(res.df)
                 return formatted, res.df, None
             except (SQLSecurityError, SQLExecutionError) as err:
@@ -388,6 +391,7 @@ class DataAnalystAgent:
                     tool_calls_made=tools_executed,
                     iterations_used=iteration,
                     total_tokens_used=total_tokens,
+                    execution_time_ms=self.last_execution_time_ms,
                 )
 
         fallback_answer = (
@@ -404,4 +408,5 @@ class DataAnalystAgent:
             tool_calls_made=tools_executed,
             iterations_used=self.max_iterations,
             total_tokens_used=total_tokens,
+            execution_time_ms=self.last_execution_time_ms,
         )

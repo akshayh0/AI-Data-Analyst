@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 import re
 import threading
+import time
 from typing import Dict, List, Optional, Tuple, Any, Set
 import duckdb
 import pandas as pd
@@ -31,6 +32,7 @@ class QueryResult:
     truncated: bool
     llm_preview_df: pd.DataFrame
     chart_df: pd.DataFrame
+    execution_time_ms: float = 0.0
 
 # Comprehensive Whitelist of allowed SQL functions (Aggregates, Math, Date/Time, String, Window, Conditionals)
 ALLOWED_SQL_FUNCTIONS: Set[str] = {
@@ -309,6 +311,7 @@ class DuckDBManager:
             except Exception as e:
                 exec_error.append(e)
 
+        t0 = time.perf_counter()
         thread = threading.Thread(target=_run, daemon=True)
         thread.start()
         thread.join(timeout=timeout_seconds)
@@ -320,6 +323,8 @@ class DuckDBManager:
                 pass
             thread.join(timeout=2.0)
             raise SQLExecutionError(f"Query timed out after {timeout_seconds} seconds.")
+
+        elapsed_ms = round((time.perf_counter() - t0) * 1000, 1)
 
         if exec_error:
             err = exec_error[0]
@@ -343,4 +348,5 @@ class DuckDBManager:
             truncated=truncated,
             llm_preview_df=llm_preview_df,
             chart_df=chart_df,
+            execution_time_ms=elapsed_ms,
         )
