@@ -1,0 +1,251 @@
+Product ID,Product Name,Category,Unit Price,Unit Cost,Stock Quantity
+PROD-0001,Pro Laptop 15 (Model 1),Electronics,1153.39,771.68,343
+PROD-0002,Pro Laptop 15 (Model 2),Electronics,895.27,644.26,99
+PROD-0003,Pro Laptop 15 (Model 3),Electronics,673.4,466.44,413
+PROD-0004,Pro Laptop 15 (Model 4),Electronics,783.45,553.79,14
+PROD-0005,Pro Laptop 15 (Model 5),Electronics,503.72,281.59,338
+PROD-0006,Pro Laptop 15 (Model 6),Electronics,851.49,480.08,108
+PROD-0007,Pro Laptop 15 (Model 7),Electronics,1228.52,800.39,17
+PROD-0008,Pro Laptop 15 (Model 8),Electronics,1126.0,519.56,448
+PROD-0009,Pro Laptop 15 (Model 9),Electronics,986.99,533.26,58
+PROD-0010,Pro Laptop 15 (Model 10),Electronics,342.39,168.21,130
+PROD-0011,Wireless Headphones (Model 1),Electronics,714.36,428.98,143
+PROD-0012,Wireless Headphones (Model 2),Electronics,1008.23,511.56,217
+PROD-0013,Wireless Headphones (Model 3),Electronics,1054.22,676.39,337
+PROD-0014,Wireless Headphones (Model 4),Electronics,1380.91,616.92,88
+PROD-0015,Wireless Headphones (Model 5),Electronics,726.07,,397
+PROD-0016,Wireless Headphones (Model 6),Electronics,843.28,560.07,457
+PROD-0017,Wireless Headphones (Model 7),Electronics,1198.07,863.85,67
+PROD-0018,Wireless Headphones (Model 8),Electronics,167.7,75.88,177
+PROD-0019,Wireless Headphones (Model 9),Electronics,1293.37,738.63,470
+PROD-0020,Wireless Headphones (Model 10),Electronics,804.73,450.55,39
+PROD-0021,Ultra HD Monitor 27 (Model 1),Electronics,873.49,427.19,11
+PROD-0022,Ultra HD Monitor 27 (Model 2),Electronics,1139.04,481.03,40
+PROD-0023,Ultra HD Monitor 27 (Model 3),Electronics,1407.11,764.21,403
+PROD-0024,Ultra HD Monitor 27 (Model 4),Electronics,272.31,144.61,466
+PROD-0025,Ultra HD Monitor 27 (Model 5),Electronics,623.12,398.15,348
+PROD-0026,Ultra HD Monitor 27 (Model 6),Electronics,1321.87,988.09,211
+PROD-0027,Ultra HD Monitor 27 (Model 7),Electronics,830.96,339.0,162
+PROD-0028,Ultra HD Monitor 27 (Model 8),Electronics,737.47,354.27,245
+PROD-0029,Ultra HD Monitor 27 (Model 9),Electronics,571.55,251.19,424
+PROD-0030,Ultra HD Monitor 27 (Model 10),Electronics,1017.48,492.7,44
+PROD-0031,Mechanical Keyboard (Model 1),Electronics,223.27,93.11,389
+PROD-0032,Mechanical Keyboard (Model 2),Electronics,142.82,95.92,81
+PROD-0033,Mechanical Keyboard (Model 3),Electronics,795.53,407.01,316
+PROD-0034,Mechanical Keyboard (Model 4),Electronics,1177.0,876.86,276
+PROD-0035,Mechanical Keyboard (Model 5),Electronics,393.88,278.83,476
+PROD-0036,Mechanical Keyboard (Model 6),Electronics,328.69,171.1,339
+PROD-0037,Mechanical Keyboard (Model 7),Electronics,1033.31,467.29,202
+PROD-0038,Mechanical Keyboard (Model 8),Electronics,341.11,238.82,83
+PROD-0039,Mechanical Keyboard (Model 9),Electronics,1224.2,728.46,78
+PROD-0040,Mechanical Keyboard (Model 10),Electronics,631.56,352.05,199
+PROD-0041,Ergonomic Mouse (Model 1),Electronics,211.3,134.34,318
+PROD-0042,Ergonomic Mouse (Model 2),Electronics,136.16,86.46,121
+PROD-0043,Ergonomic Mouse (Model 3),Electronics,760.74,308.38,489
+PROD-0044,Ergonomic Mouse (Model 4),Electronics,349.83,251.9,366
+PROD-0045,Ergonomic Mouse (Model 5),Electronics,938.25,629.97,204
+PROD-0046,Ergonomic Mouse (Model 6),Electronics,742.08,526.12,248
+PROD-0047,Ergonomic Mouse (Model 7),Electronics,220.02,158.42,199
+PROD-0048,Ergonomic Mouse (Model 8),Electronics,524.35,212.72,293
+PROD-0049,Ergonomic Mouse (Model 9),Electronics,1407.36,725.43,204
+PROD-0050,Ergonomic Mouse (Model 10),Electronics,889.1,460.68,400
+PROD-0051,Smart Watch v3 (Model 1),Electronics,1246.66,572.07,417
+PROD-0052,Smart Watch v3 (Model 2),Electronics,580.09,412.61,338
+PROD-0053,Smart Watch v3 (Model 3),Electronics,1439.28,987.78,34
+PROD-0054,Smart Watch v3 (Model 4),Electronics,1165.36,754.58,14
+PROD-0055,Smart Watch v3 (Model 5),Electronics,390.58,283.9,477
+PROD-0056,Smart Watch v3 (Model 6),Electronics,766.15,309.64,281
+PROD-0057,Smart Watch v3 (Model 7),Electronics,1105.51,712.23,230
+PROD-0058,Smart Watch v3 (Model 8),Electronics,1224.76,553.73,108
+PROD-0059,Smart Watch v3 (Model 9),Electronics,960.09,410.59,217
+PROD-0060,Smart Watch v3 (Model 10),Electronics,731.78,504.8,51
+PROD-0061,Noise-Cancelling Earbuds (Model 1),Electronics,1008.3,537.16,292
+PROD-0062,Noise-Cancelling Earbuds (Model 2),Electronics,755.93,,340
+PROD-0063,Noise-Cancelling Earbuds (Model 3),Electronics,1193.81,698.21,31
+PROD-0064,Noise-Cancelling Earbuds (Model 4),Electronics,406.27,201.06,483
+PROD-0065,Noise-Cancelling Earbuds (Model 5),Electronics,185.57,76.36,485
+PROD-0066,Noise-Cancelling Earbuds (Model 6),Electronics,1287.61,884.9,430
+PROD-0067,Noise-Cancelling Earbuds (Model 7),Electronics,645.58,446.82,209
+PROD-0068,Noise-Cancelling Earbuds (Model 8),Electronics,1041.39,704.68,362
+PROD-0069,Noise-Cancelling Earbuds (Model 9),Electronics,1108.31,612.87,439
+PROD-0070,Noise-Cancelling Earbuds (Model 10),Electronics,187.95,138.92,177
+PROD-0071,USB-C Docking Hub (Model 1),Electronics,122.07,64.03,491
+PROD-0072,USB-C Docking Hub (Model 2),Electronics,613.11,410.94,161
+PROD-0073,USB-C Docking Hub (Model 3),Electronics,1213.24,787.5,334
+PROD-0074,USB-C Docking Hub (Model 4),Electronics,299.07,218.33,237
+PROD-0075,USB-C Docking Hub (Model 5),Electronics,591.08,329.29,294
+PROD-0076,USB-C Docking Hub (Model 6),Electronics,807.67,491.81,411
+PROD-0077,USB-C Docking Hub (Model 7),Electronics,540.69,232.3,471
+PROD-0078,USB-C Docking Hub (Model 8),Electronics,874.54,559.58,96
+PROD-0079,USB-C Docking Hub (Model 9),Electronics,277.15,153.02,225
+PROD-0080,USB-C Docking Hub (Model 10),Electronics,505.65,329.84,263
+PROD-0081,Executive Standing Desk (Model 1),Office Supplies,56.93,41.68,180
+PROD-0082,Executive Standing Desk (Model 2),Office Supplies,101.17,55.72,431
+PROD-0083,Executive Standing Desk (Model 3),Office Supplies,243.81,178.36,112
+PROD-0084,Executive Standing Desk (Model 4),Office Supplies,52.63,34.59,334
+PROD-0085,Executive Standing Desk (Model 5),Office Supplies,148.21,101.64,211
+PROD-0086,Executive Standing Desk (Model 6),Office Supplies,233.7,108.2,403
+PROD-0087,Executive Standing Desk (Model 7),Office Supplies,238.72,132.12,159
+PROD-0088,Executive Standing Desk (Model 8),Office Supplies,26.6,16.91,81
+PROD-0089,Executive Standing Desk (Model 9),Office Supplies,68.09,46.04,47
+PROD-0090,Executive Standing Desk (Model 10),Office Supplies,153.5,111.01,455
+PROD-0091,Mesh Ergonomic Chair (Model 1),Office Supplies,140.47,100.21,284
+PROD-0092,Mesh Ergonomic Chair (Model 2),Office Supplies,229.46,145.17,95
+PROD-0093,Mesh Ergonomic Chair (Model 3),Office Supplies,20.63,11.14,395
+PROD-0094,Mesh Ergonomic Chair (Model 4),Office Supplies,201.1,96.07,392
+PROD-0095,Mesh Ergonomic Chair (Model 5),Office Supplies,149.32,80.17,405
+PROD-0096,Mesh Ergonomic Chair (Model 6),Office Supplies,175.7,99.97,161
+PROD-0097,Mesh Ergonomic Chair (Model 7),Office Supplies,240.81,108.26,169
+PROD-0098,Mesh Ergonomic Chair (Model 8),Office Supplies,198.22,86.06,379
+PROD-0099,Mesh Ergonomic Chair (Model 9),Office Supplies,86.54,38.1,444
+PROD-0100,Mesh Ergonomic Chair (Model 10),Office Supplies,36.25,23.89,274
+PROD-0101,Gel Pen Pack (12x) (Model 1),Office Supplies,48.43,23.3,217
+PROD-0102,Gel Pen Pack (12x) (Model 2),Office Supplies,54.73,36.02,462
+PROD-0103,Gel Pen Pack (12x) (Model 3),Office Supplies,152.13,71.81,395
+PROD-0104,Gel Pen Pack (12x) (Model 4),Office Supplies,201.04,118.19,197
+PROD-0105,Gel Pen Pack (12x) (Model 5),Office Supplies,119.81,70.05,337
+PROD-0106,Gel Pen Pack (12x) (Model 6),Office Supplies,103.27,54.03,244
+PROD-0107,Gel Pen Pack (12x) (Model 7),Office Supplies,205.3,126.27,53
+PROD-0108,Gel Pen Pack (12x) (Model 8),Office Supplies,85.16,45.19,82
+PROD-0109,Gel Pen Pack (12x) (Model 9),Office Supplies,110.38,51.33,335
+PROD-0110,Gel Pen Pack (12x) (Model 10),Office Supplies,230.6,105.71,157
+PROD-0111,Heavy-duty Stapler (Model 1),Office Supplies,85.5,44.94,14
+PROD-0112,Heavy-duty Stapler (Model 2),Office Supplies,56.83,35.72,219
+PROD-0113,Heavy-duty Stapler (Model 3),Office Supplies,109.75,47.08,25
+PROD-0114,Heavy-duty Stapler (Model 4),Office Supplies,62.93,31.53,409
+PROD-0115,Heavy-duty Stapler (Model 5),Office Supplies,188.2,82.74,68
+PROD-0116,Heavy-duty Stapler (Model 6),Office Supplies,140.35,93.32,399
+PROD-0117,Heavy-duty Stapler (Model 7),Office Supplies,141.12,97.45,394
+PROD-0118,Heavy-duty Stapler (Model 8),Office Supplies,219.95,154.35,54
+PROD-0119,Heavy-duty Stapler (Model 9),Office Supplies,248.55,169.95,311
+PROD-0120,Heavy-duty Stapler (Model 10),Office Supplies,216.65,133.38,411
+PROD-0121,Recycled Copy Paper (A4) (Model 1),Office Supplies,59.67,29.74,285
+PROD-0122,Recycled Copy Paper (A4) (Model 2),Office Supplies,244.96,179.64,273
+PROD-0123,Recycled Copy Paper (A4) (Model 3),Office Supplies,173.03,116.79,480
+PROD-0124,Recycled Copy Paper (A4) (Model 4),Office Supplies,76.56,34.18,84
+PROD-0125,Recycled Copy Paper (A4) (Model 5),Office Supplies,208.84,119.31,305
+PROD-0126,Recycled Copy Paper (A4) (Model 6),Office Supplies,160.68,108.96,403
+PROD-0127,Recycled Copy Paper (A4) (Model 7),Office Supplies,133.75,70.78,496
+PROD-0128,Recycled Copy Paper (A4) (Model 8),Office Supplies,149.67,64.75,244
+PROD-0129,Recycled Copy Paper (A4) (Model 9),Office Supplies,177.35,95.63,229
+PROD-0130,Recycled Copy Paper (A4) (Model 10),Office Supplies,128.73,76.15,76
+PROD-0131,Notebook Leather Journal (Model 1),Office Supplies,126.48,52.73,60
+PROD-0132,Notebook Leather Journal (Model 2),Office Supplies,210.81,95.98,243
+PROD-0133,Notebook Leather Journal (Model 3),Office Supplies,239.93,107.05,342
+PROD-0134,Notebook Leather Journal (Model 4),Office Supplies,219.86,115.68,52
+PROD-0135,Notebook Leather Journal (Model 5),Office Supplies,226.91,115.03,368
+PROD-0136,Notebook Leather Journal (Model 6),Office Supplies,113.02,53.65,49
+PROD-0137,Notebook Leather Journal (Model 7),Office Supplies,64.29,41.37,428
+PROD-0138,Notebook Leather Journal (Model 8),Office Supplies,216.48,103.94,55
+PROD-0139,Notebook Leather Journal (Model 9),Office Supplies,34.58,15.49,406
+PROD-0140,Notebook Leather Journal (Model 10),Office Supplies,219.88,93.22,298
+PROD-0141,Desk Organizer Wire (Model 1),Office Supplies,166.0,102.89,87
+PROD-0142,Desk Organizer Wire (Model 2),Office Supplies,157.86,112.68,81
+PROD-0143,Desk Organizer Wire (Model 3),Office Supplies,151.5,77.28,81
+PROD-0144,Desk Organizer Wire (Model 4),Office Supplies,164.71,107.46,155
+PROD-0145,Desk Organizer Wire (Model 5),Office Supplies,175.71,88.83,275
+PROD-0146,Desk Organizer Wire (Model 6),Office Supplies,55.28,37.28,416
+PROD-0147,Desk Organizer Wire (Model 7),Office Supplies,128.77,78.28,280
+PROD-0148,Desk Organizer Wire (Model 8),Office Supplies,12.9,6.91,439
+PROD-0149,Desk Organizer Wire (Model 9),Office Supplies,97.7,71.72,404
+PROD-0150,Desk Organizer Wire (Model 10),Office Supplies,150.97,109.14,495
+PROD-0151,Cloud Analytics Suite (Model 1),Software,521.43,284.39,369
+PROD-0152,Cloud Analytics Suite (Model 2),Software,453.24,194.56,50
+PROD-0153,Cloud Analytics Suite (Model 3),Software,656.05,352.14,334
+PROD-0154,Cloud Analytics Suite (Model 4),Software,532.37,294.46,498
+PROD-0155,Cloud Analytics Suite (Model 5),Software,114.66,64.06,321
+PROD-0156,Cloud Analytics Suite (Model 6),Software,543.54,219.83,80
+PROD-0157,Cloud Analytics Suite (Model 7),Software,764.76,515.48,379
+PROD-0158,Cloud Analytics Suite (Model 8),Software,612.33,402.01,70
+PROD-0159,Cloud Analytics Suite (Model 9),Software,655.33,276.78,374
+PROD-0160,Cloud Analytics Suite (Model 10),Software,422.11,177.03,449
+PROD-0161,Security Antivirus Pro (Model 1),Software,241.34,145.01,380
+PROD-0162,Security Antivirus Pro (Model 2),Software,51.93,21.0,33
+PROD-0163,Security Antivirus Pro (Model 3),Software,162.56,113.81,293
+PROD-0164,Security Antivirus Pro (Model 4),Software,541.78,263.79,478
+PROD-0165,Security Antivirus Pro (Model 5),Software,108.42,62.42,471
+PROD-0166,Security Antivirus Pro (Model 6),Software,436.83,236.03,459
+PROD-0167,Security Antivirus Pro (Model 7),Software,683.63,405.79,14
+PROD-0168,Security Antivirus Pro (Model 8),Software,638.38,309.55,198
+PROD-0169,Security Antivirus Pro (Model 9),Software,629.46,450.16,399
+PROD-0170,Security Antivirus Pro (Model 10),Software,749.3,441.74,335
+PROD-0171,CRM Starter License (Model 1),Software,763.24,480.88,444
+PROD-0172,CRM Starter License (Model 2),Software,203.9,111.52,40
+PROD-0173,CRM Starter License (Model 3),Software,259.87,125.0,442
+PROD-0174,CRM Starter License (Model 4),Software,329.37,141.54,58
+PROD-0175,CRM Starter License (Model 5),Software,345.76,145.84,349
+PROD-0176,CRM Starter License (Model 6),Software,245.74,167.17,368
+PROD-0177,CRM Starter License (Model 7),Software,389.57,284.48,79
+PROD-0178,CRM Starter License (Model 8),Software,166.56,93.79,218
+PROD-0179,CRM Starter License (Model 9),Software,627.75,352.9,446
+PROD-0180,CRM Starter License (Model 10),Software,564.54,363.51,30
+PROD-0181,DevOps Pipeline Tool (Model 1),Software,161.24,119.15,212
+PROD-0182,DevOps Pipeline Tool (Model 2),Software,245.13,100.72,217
+PROD-0183,DevOps Pipeline Tool (Model 3),Software,462.59,201.54,416
+PROD-0184,DevOps Pipeline Tool (Model 4),Software,672.78,299.89,431
+PROD-0185,DevOps Pipeline Tool (Model 5),Software,753.18,455.78,479
+PROD-0186,DevOps Pipeline Tool (Model 6),Software,98.35,54.6,75
+PROD-0187,DevOps Pipeline Tool (Model 7),Software,656.67,479.24,35
+PROD-0188,DevOps Pipeline Tool (Model 8),Software,666.26,273.38,359
+PROD-0189,DevOps Pipeline Tool (Model 9),Software,731.23,406.64,86
+PROD-0190,DevOps Pipeline Tool (Model 10),Software,234.34,127.53,291
+PROD-0191,Team Chat Enterprise (Model 1),Software,337.26,210.76,418
+PROD-0192,Team Chat Enterprise (Model 2),Software,651.63,486.31,410
+PROD-0193,Team Chat Enterprise (Model 3),Software,636.08,380.36,174
+PROD-0194,Team Chat Enterprise (Model 4),Software,289.16,206.32,408
+PROD-0195,Team Chat Enterprise (Model 5),Software,403.76,244.03,129
+PROD-0196,Team Chat Enterprise (Model 6),Software,542.65,372.1,479
+PROD-0197,Team Chat Enterprise (Model 7),Software,760.85,566.02,208
+PROD-0198,Team Chat Enterprise (Model 8),Software,683.92,415.4,422
+PROD-0199,Team Chat Enterprise (Model 9),Software,493.67,258.23,300
+PROD-0200,Team Chat Enterprise (Model 10),Software,191.18,135.46,262
+PROD-0201,Conference Table Wood (Model 1),Furniture,214.36,130.88,20
+PROD-0202,Conference Table Wood (Model 2),Furniture,458.46,204.32,377
+PROD-0203,Conference Table Wood (Model 3),Furniture,220.05,99.4,370
+PROD-0204,Conference Table Wood (Model 4),Furniture,1565.92,1152.82,201
+PROD-0205,Conference Table Wood (Model 5),Furniture,685.42,351.56,90
+PROD-0206,Conference Table Wood (Model 6),Furniture,938.5,479.62,372
+PROD-0207,Conference Table Wood (Model 7),Furniture,1442.15,689.54,311
+PROD-0208,Conference Table Wood (Model 8),Furniture,614.79,284.15,10
+PROD-0209,Conference Table Wood (Model 9),Furniture,1790.4,1320.98,26
+PROD-0210,Conference Table Wood (Model 10),Furniture,1147.12,715.66,63
+PROD-0211,Filing Cabinet Metal (Model 1),Furniture,519.83,386.67,95
+PROD-0212,Filing Cabinet Metal (Model 2),Furniture,1245.64,816.21,181
+PROD-0213,Filing Cabinet Metal (Model 3),Furniture,233.9,114.57,65
+PROD-0214,Filing Cabinet Metal (Model 4),Furniture,825.02,378.04,221
+PROD-0215,Filing Cabinet Metal (Model 5),Furniture,290.4,164.9,452
+PROD-0216,Filing Cabinet Metal (Model 6),Furniture,878.16,596.9,27
+PROD-0217,Filing Cabinet Metal (Model 7),Furniture,244.66,112.43,202
+PROD-0218,Filing Cabinet Metal (Model 8),Furniture,1763.11,913.79,324
+PROD-0219,Filing Cabinet Metal (Model 9),Furniture,1218.11,746.17,232
+PROD-0220,Filing Cabinet Metal (Model 10),Furniture,439.17,282.83,379
+PROD-0221,Bookshelf Modern (Model 1),Furniture,619.63,268.65,211
+PROD-0222,Bookshelf Modern (Model 2),Furniture,726.19,399.16,160
+PROD-0223,Bookshelf Modern (Model 3),Furniture,282.94,133.67,336
+PROD-0224,Bookshelf Modern (Model 4),Furniture,638.03,343.97,260
+PROD-0225,Bookshelf Modern (Model 5),Furniture,771.05,408.55,205
+PROD-0226,Bookshelf Modern (Model 6),Furniture,901.3,431.89,147
+PROD-0227,Bookshelf Modern (Model 7),Furniture,282.46,179.04,423
+PROD-0228,Bookshelf Modern (Model 8),Furniture,1050.05,729.03,429
+PROD-0229,Bookshelf Modern (Model 9),Furniture,1693.09,1016.62,130
+PROD-0230,Bookshelf Modern (Model 10),Furniture,1320.03,759.99,471
+PROD-0231,Lounge Chair Fabric (Model 1),Furniture,367.71,269.25,239
+PROD-0232,Lounge Chair Fabric (Model 2),Furniture,1478.21,656.57,226
+PROD-0233,Lounge Chair Fabric (Model 3),Furniture,1501.91,678.5,314
+PROD-0234,Lounge Chair Fabric (Model 4),Furniture,232.58,124.62,213
+PROD-0235,Lounge Chair Fabric (Model 5),Furniture,1660.83,671.52,368
+PROD-0236,Lounge Chair Fabric (Model 6),Furniture,816.26,368.84,311
+PROD-0237,Lounge Chair Fabric (Model 7),Furniture,297.47,200.15,412
+PROD-0238,Lounge Chair Fabric (Model 8),Furniture,810.3,432.75,258
+PROD-0239,Lounge Chair Fabric (Model 9),Furniture,797.0,491.26,358
+PROD-0240,Lounge Chair Fabric (Model 10),Furniture,676.91,327.05,391
+PROD-0241,Whiteboard 6x4ft (Model 1),Furniture,687.62,466.05,169
+PROD-0242,Whiteboard 6x4ft (Model 2),Furniture,285.01,200.68,78
+PROD-0243,Whiteboard 6x4ft (Model 3),Furniture,659.06,431.74,319
+PROD-0244,Whiteboard 6x4ft (Model 4),Furniture,1504.27,991.81,398
+PROD-0245,Whiteboard 6x4ft (Model 5),Furniture,1449.7,613.17,373
+PROD-0246,Whiteboard 6x4ft (Model 6),Furniture,1597.28,655.1,108
+PROD-0247,Whiteboard 6x4ft (Model 7),Furniture,175.56,73.33,194
+PROD-0248,Whiteboard 6x4ft (Model 8),Furniture,968.61,602.86,73
+PROD-0249,Whiteboard 6x4ft (Model 9),Furniture,869.45,640.07,252
+PROD-0250,Whiteboard 6x4ft (Model 10),Furniture,1622.75,1074.48,362

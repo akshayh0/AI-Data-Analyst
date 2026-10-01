@@ -1,0 +1,12 @@
+streamlit==1.42.0
+duckdb==1.2.0
+pandas==2.2.3
+numpy==2.2.3
+plotly==6.0.0
+groq==1.7.0
+scikit-learn==1.6.1
+sqlglot==26.8.0
+pydantic==2.13.5
+python-dotenv==1.0.1
+chardet==5.2.0
+pytest==8.3.4

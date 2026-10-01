@@ -1,0 +1,38 @@
+{
+  "dataset": "sales.csv",
+  "description": "Planted deliberate statistical and behavioral anomalies in sales dataset",
+  "anomalies": [
+    {
+      "order_id": "ORD-00142",
+      "row_index": 141,
+      "type": "extreme_high_revenue_and_quantity",
+      "column": "revenue",
+      "value": 246835.0,
+      "reason": "Extreme bulk purchase: quantity=500, revenue=$246,835.00 is far above normal range"
+    },
+    {
+      "order_id": "ORD-00389",
+      "row_index": 388,
+      "type": "extreme_negative_profit",
+      "column": "profit",
+      "value": -25000.0,
+      "reason": "Severely abnormal loss of -$25,000.00 due to 90% discount pricing error"
+    },
+    {
+      "order_id": "ORD-00615",
+      "row_index": 614,
+      "type": "extreme_single_transaction_revenue",
+      "column": "revenue",
+      "value": 98500.0,
+      "reason": "Unusually large single transaction revenue of $98,500.00"
+    },
+    {
+      "order_id": "ORD-00804",
+      "row_index": 803,
+      "type": "extreme_quantity_spike",
+      "column": "quantity",
+      "value": 650,
+      "reason": "Unusually massive volume quantity of 650 units"
+    }
+  ]
+}
