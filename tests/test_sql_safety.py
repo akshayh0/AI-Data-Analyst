@@ -136,3 +136,11 @@ def test_timeout_and_connection_recovery(db_manager):
     # Verify connection remains completely usable after timeout interrupt
     recovery_res = db_manager.execute_query("SELECT 1 AS alive")
     assert recovery_res.df.iloc[0]["alive"] == 1
+
+def test_strftime_date_formatting(db_manager):
+    """Regression test: strftime date formatting function must safely validate and execute in DuckDB."""
+    query = "SELECT strftime(DATE '2024-03-15', '%Y-%m') AS sales_month"
+    validate_sql_security(query)
+    res = db_manager.execute_query(query)
+    assert res.df.iloc[0]["sales_month"] == "2024-03"
+

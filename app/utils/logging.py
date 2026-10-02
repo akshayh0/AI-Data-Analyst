@@ -27,6 +27,11 @@ def setup_logger(log_level: str = "INFO", logs_dir: Optional[Path] = None) -> lo
     )
 
     # Console handler
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)

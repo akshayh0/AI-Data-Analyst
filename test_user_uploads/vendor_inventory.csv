@@ -1,0 +1,16 @@
+item_sku,vendor_name,product_category,stock_on_hand,reorder_level,unit_cost
+SKU-E101,Apex Tech,Electronics,45,15,320.0
+SKU-E102,Apex Tech,Electronics,12,20,680.0
+SKU-E103,Silicon Global,Electronics,80,25,110.0
+SKU-F201,Nordic Woods,Furniture,18,10,290.0
+SKU-F202,Nordic Woods,Furniture,5,8,540.0
+SKU-F203,Comfort Living,Furniture,30,15,175.0
+SKU-O301,PaperCraft Co,Office Supplies,250,50,12.5
+SKU-O302,PaperCraft Co,Office Supplies,140,40,28.0
+SKU-C401,Urban Trend,Clothing,95,30,35.0
+SKU-C402,Urban Trend,Clothing,22,25,65.0
+SKU-B501,Lexicon Press,Books,180,40,14.0
+SKU-B502,Lexicon Press,Books,65,20,22.0
+SKU-E104,Silicon Global,Electronics,8,15,950.0
+SKU-O303,Metro Supply,Office Supplies,310,60,8.5
+SKU-C403,Pure Cotton,Clothing,115,35,42.0

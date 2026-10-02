@@ -29,6 +29,7 @@ class AgentTurnResult:
     pandas_executed: Optional[str] = None
     data_preview: Optional[pd.DataFrame] = None
     tool_calls_made: List[str] = field(default_factory=list)
+    tool_execution_log: List[Dict[str, Any]] = field(default_factory=list)
     iterations_used: int = 0
     total_tokens_used: int = 0
     execution_time_ms: float = 0.0
@@ -167,8 +168,8 @@ class DataAnalystAgent:
         args = tool_call.arguments
         logger.info(f"Agent executing tool '{name}' with args={args}")
 
-        if name == "run_sql":
-            query = args.get("query", "")
+        if name in ("run_sql", "execute_sql"):
+            query = args.get("query") or args.get("sql", "")
             try:
                 res = self.db.execute_query(query)
                 self.last_result_df = res.df
@@ -264,6 +265,13 @@ class DataAnalystAgent:
         # Verify numbers in answer against tool output
         unsupported = verify_answer_numbers(answer, data_preview)
 
+        # Check if unexecuted SQL is claimed as production SQL
+        if not sql_executed:
+            answer = re.sub(r"(?i)\bproduction sql\b", "SQL generated but not executed", answer)
+            answer = re.sub(r"(?i)\bproduction query\b", "SQL generated but not executed", answer)
+            if "```sql" in answer and "SQL generated but not executed" not in answer:
+                answer = re.sub(r"```sql", "*(SQL generated but not executed)*\n```sql", answer)
+
         # Assemble standardized 5-part markdown
         parts = [
             f"### 1. Direct Answer\n{answer}\n",
@@ -289,7 +297,7 @@ class DataAnalystAgent:
         elif pandas_executed:
             parts.append(f"### 4. Code Used\n```python\n{pandas_executed}\n```\n")
         else:
-            parts.append("### 4. Code Used\nNo database query executed.\n")
+            parts.append("### 4. Code Used\nSQL generated but not executed.\n")
 
         if reasoning:
             parts.append(f"### 5. How I Got This\n{reasoning}\n")
@@ -306,6 +314,18 @@ class DataAnalystAgent:
         full_formatted = "\n".join(parts)
         return full_formatted, insights, reasoning, unsupported
 
+    def _get_context_messages_for_llm(self) -> List[LLMMessage]:
+        """Return token-budgeted messages including system prompt and recent turns."""
+        if len(self.conversation_history) <= 8:
+            return self.conversation_history
+
+        system_msg = self.conversation_history[0]
+        tail = self.conversation_history[-6:]
+        while tail and tail[0].role == "tool":
+            tail = tail[1:]
+
+        return [system_msg] + tail
+
     def ask(self, user_question: str) -> AgentTurnResult:
         """
         Main multi-turn agent entry point.
@@ -317,6 +337,7 @@ class DataAnalystAgent:
         self.conversation_history.append(user_msg)
 
         tools_executed: List[str] = []
+        tool_execution_log: List[Dict[str, Any]] = []
         turn_chart_spec: Optional[Dict[str, Any]] = None
         turn_data_preview: Optional[pd.DataFrame] = None
         turn_sql: Optional[str] = None
@@ -326,8 +347,9 @@ class DataAnalystAgent:
         for iteration in range(1, self.max_iterations + 1):
             logger.debug(f"Agent iteration {iteration}/{self.max_iterations}")
 
+            context_msgs = self._get_context_messages_for_llm()
             response = self.llm.generate(
-                messages=self.conversation_history,
+                messages=context_msgs,
                 tools=TOOLS_DEFINITION,
             )
             total_tokens += response.usage.total_tokens
@@ -344,11 +366,22 @@ class DataAnalystAgent:
                     tools_executed.append(tc.name)
                     tool_output, result_df, chart_spec = self._execute_tool(tc)
 
+                    is_err = "ERROR" in tool_output.upper() or "FAILED" in tool_output.upper() or "EXCEPTION" in tool_output.upper()
+                    tool_execution_log.append({
+                        "iteration": iteration,
+                        "tool_name": tc.name,
+                        "arguments": tc.arguments,
+                        "output": tool_output,
+                        "is_error": is_err,
+                        "sql": tc.arguments.get("query") if isinstance(tc.arguments, dict) else None,
+                        "code": tc.arguments.get("code") if isinstance(tc.arguments, dict) else None,
+                    })
+
                     if result_df is not None:
                         turn_data_preview = result_df
                     if chart_spec is not None:
                         turn_chart_spec = chart_spec
-                    if tc.name == "run_sql":
+                    if tc.name in ("run_sql", "execute_sql"):
                         turn_sql = self.last_sql
                     elif tc.name == "run_pandas":
                         turn_pandas = self.last_pandas
@@ -389,6 +422,7 @@ class DataAnalystAgent:
                     pandas_executed=final_pandas,
                     data_preview=final_data_preview,
                     tool_calls_made=tools_executed,
+                    tool_execution_log=tool_execution_log,
                     iterations_used=iteration,
                     total_tokens_used=total_tokens,
                     execution_time_ms=self.last_execution_time_ms,
@@ -406,7 +440,11 @@ class DataAnalystAgent:
             pandas_executed=turn_pandas if turn_pandas is not None else self.last_pandas,
             data_preview=final_data_preview,
             tool_calls_made=tools_executed,
+            tool_execution_log=tool_execution_log,
             iterations_used=self.max_iterations,
             total_tokens_used=total_tokens,
             execution_time_ms=self.last_execution_time_ms,
         )
+
+    # Alias for conversational chat execution
+    chat = ask

@@ -18,10 +18,10 @@ class AppConfig(BaseModel):
         default_factory=lambda: os.getenv("GROQ_API_KEY", "")
     )
     groq_model: str = Field(
-        default_factory=lambda: os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+        default_factory=lambda: os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
     )
     groq_fallback_model: str = Field(
-        default_factory=lambda: os.getenv("GROQ_FALLBACK_MODEL", "llama-3.1-8b-instant")
+        default_factory=lambda: os.getenv("GROQ_FALLBACK_MODEL", "openai/gpt-oss-20b")
     )
 
     # Agent execution limits

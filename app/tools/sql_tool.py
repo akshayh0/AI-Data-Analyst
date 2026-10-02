@@ -47,6 +47,7 @@ ALLOWED_SQL_FUNCTIONS: Set[str] = {
     "acos", "asin", "atan", "greatest", "least", "random", "isnan", "isinf",
     # Date & Time
     "date_trunc", "date_part", "date_diff", "date_add", "date_sub", "strftime", "strptime",
+    "timetostr", "strtotime",
     "current_date", "current_time", "current_timestamp", "now", "today", "extract", "epoch",
     "year", "month", "day", "hour", "minute", "second", "quarter", "dayofweek", "dayofyear",
     "week", "monthname", "dayname", "to_timestamp", "make_date", "age",
@@ -90,6 +91,8 @@ TYPED_SAFE_NODES = (
     exp.DateTrunc,
     exp.DateAdd,
     exp.DateDiff,
+    exp.TimeToStr,
+    exp.StrToTime,
     exp.Window,
     exp.Corr,
     exp.Star,
@@ -266,6 +269,16 @@ class DuckDBManager:
     def list_tables(self) -> List[str]:
         """List registered table names."""
         return list(self._registered_tables.keys())
+
+    def unregister_dataframe(self, table_name: str) -> None:
+        """Unregister a table from DuckDB."""
+        if table_name in self._registered_tables:
+            del self._registered_tables[table_name]
+        try:
+            self._con.unregister(table_name)
+        except Exception:
+            pass
+        logger.info(f"Unregistered table '{table_name}' from DuckDB")
 
     def get_dataframe(self, table_name: str) -> Optional[pd.DataFrame]:
         """Get the underlying pandas DataFrame for a registered table."""

@@ -25,8 +25,7 @@ COPY requirements.txt .
 # Install dependencies into system Python
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
-
-# Copy application source code and sample data
+git remote -v
 COPY app/ ./app/
 COPY sample_data/ ./sample_data/
 COPY tests/ ./tests/

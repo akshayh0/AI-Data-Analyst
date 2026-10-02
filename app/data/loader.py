@@ -2,7 +2,7 @@
 
 import io
 from pathlib import Path
-from typing import BinaryIO, Dict, Optional, Tuple, Union
+from typing import BinaryIO, Dict, Optional, Set, Tuple, Union
 import pandas as pd
 
 from app.data.profiler import TableProfile, profile_dataframe
@@ -22,6 +22,7 @@ def load_csv_file(
     file_source: Union[str, Path, BinaryIO, bytes],
     filename: Optional[str] = None,
     max_size_mb: Optional[int] = None,
+    existing_tables: Optional[Set[str]] = None,
 ) -> Tuple[pd.DataFrame, TableProfile, str, Dict[str, str]]:
     """
     Validate, decode, parse, sanitize and profile an uploaded CSV.
@@ -93,7 +94,13 @@ def load_csv_file(
     df.columns = cleaned_columns
 
     # 7. Sanitize table name
-    table_name = sanitize_table_name(resolved_filename)
+    base_table_name = sanitize_table_name(resolved_filename)
+    table_name = base_table_name
+    if existing_tables:
+        counter = 1
+        while table_name in existing_tables:
+            table_name = f"{base_table_name}_{counter}"
+            counter += 1
 
     # 8. Profile the DataFrame
     profile = profile_dataframe(

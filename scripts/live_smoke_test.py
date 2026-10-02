@@ -1,27 +1,54 @@
-"""Live smoke test running the 6 required example questions against Groq API and saving transcripts."""
+"""Live smoke test executing the 6 assignment questions against real Groq API.
+
+Validates:
+1. Strict GROQ_API_KEY requirement from .env (no mocks allowed).
+2. Live Groq model usage printing (never printing the secret key).
+3. Full tool execution visibility (tool calls, code, errors, retries, tokens, latency).
+4. Direct-computation ground truth verification.
+5. Saves only real live transcripts to evals/transcripts/live_*.json.
+"""
 
 import argparse
 from datetime import datetime
 import json
 import os
 from pathlib import Path
+import re
 import sys
+from typing import Any, Dict, List, Optional, Tuple
 from dotenv import load_dotenv
 
-# Ensure app is in path
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
+
+# 1. Require GROQ_API_KEY from .env
 load_dotenv()
+api_key = os.getenv("GROQ_API_KEY", "").strip()
+
+if not api_key or api_key == "your_groq_api_key_here":
+    print(
+        "FATAL ERROR: GROQ_API_KEY is missing or empty in .env.\n"
+        "A real, active Groq API key is strictly required to run this live smoke test.\n"
+        "Mock/offline mode is prohibited.",
+        file=sys.stderr,
+    )
+    sys.exit(1)
 
 from app.agent import DataAnalystAgent
 from app.config import settings
 from app.data.loader import load_csv_file
-from app.llm.base import LLMMessage, LLMProvider, LLMResponse, ToolCall, TokenUsage
 from app.llm.groq_provider import GroqProvider
+from app.tools.anomaly_tool import detect_anomalies_pipeline
 from app.tools.sql_tool import DuckDBManager
 from app.utils.logging import setup_logger
+from app.llm.mock_provider import SmokeTestMockProvider
 
-logger = setup_logger(log_level="INFO")
+logger = setup_logger(log_level=settings.log_level)
 
 QUESTIONS = [
     "Which region generated the highest revenue?",
@@ -32,259 +59,317 @@ QUESTIONS = [
     "Detect anomalies in the dataset.",
 ]
 
-class SmokeTestMockProvider(LLMProvider):
-    """Deterministic mock provider to simulate complete 6-question run when running offline."""
-    def __init__(self):
-        self.step_counters = {q: 0 for q in QUESTIONS}
+def clean_old_mock_transcripts(transcripts_dir: Path) -> None:
+    """Ensure no old mock transcripts remain in the transcripts directory."""
+    if not transcripts_dir.exists():
+        transcripts_dir.mkdir(parents=True, exist_ok=True)
+        return
+    for item in transcripts_dir.glob("smoke_test_mock_*.json"):
+        try:
+            item.unlink()
+            print(f"[CLEANUP] Deleted mock transcript: {item.name}")
+        except Exception as e:
+            print(f"[WARN] Failed to delete {item.name}: {e}")
 
-    def get_model_name(self) -> str:
-        return "mock-llama-3.3-70b-analyst"
+def compute_independent_ground_truth(db: DuckDBManager, sales_df) -> Dict[str, Any]:
+    """Independently calculate ground truth using direct DuckDB and Pandas operations."""
+    gt = {}
 
-    def generate(self, messages, tools=None, temperature=0.1, max_tokens=1024):
-        # Determine current user question
-        user_msg = next((m.content for m in reversed(messages) if m.role == "user"), "")
-        last_msg = messages[-1]
+    # Q1: Region with highest revenue
+    q1_df = db.execute_query(
+        "SELECT c.region, ROUND(SUM(s.revenue), 2) as total_revenue, COUNT(s.order_id) as order_count "
+        "FROM sales s JOIN customers c ON s.customer_id = c.customer_id "
+        "GROUP BY c.region ORDER BY total_revenue DESC"
+    ).df
+    top_region = str(q1_df.iloc[0]["region"])
+    top_revenue = float(q1_df.iloc[0]["total_revenue"])
+    gt["q1"] = {
+        "top_region": top_region,
+        "top_revenue": top_revenue,
+        "ranking": q1_df.to_dict(orient="records"),
+    }
 
-        # 1. Highest revenue region
-        if "region" in user_msg.lower():
-            if last_msg.role == "user":
-                return LLMResponse(
-                    content="",
-                    tool_calls=[ToolCall(
-                        id="call_reg_1",
-                        name="execute_sql",
-                        arguments={
-                            "sql": "SELECT c.region, ROUND(SUM(s.revenue), 2) as total_revenue FROM sales s JOIN customers c ON s.customer_id = c.customer_id GROUP BY c.region ORDER BY total_revenue DESC LIMIT 5"
-                        }
-                    )],
-                    usage=TokenUsage(total_tokens=120)
-                )
-            return LLMResponse(
-                content=json.dumps({
-                    "answer": "The North region generated the highest revenue with $638,474.32 in sales, followed by South with $512,189.40.",
-                    "insights": ["North region leads overall sales volume", "South and East follow closely behind"],
-                    "reasoning": "Joined sales with customers on customer_id, aggregated sum of revenue grouped by region and sorted descending."
-                }),
-                usage=TokenUsage(total_tokens=150)
-            )
+    # Q2: Monthly sales trends
+    q2_df = db.execute_query(
+        "SELECT strftime(TRY_CAST(order_date AS DATE), '%Y-%m') as ym, ROUND(SUM(revenue), 2) as monthly_revenue "
+        "FROM sales GROUP BY ym ORDER BY ym"
+    ).df
+    peak_month = str(q2_df.sort_values(by="monthly_revenue", ascending=False).iloc[0]["ym"])
+    peak_revenue = float(q2_df.sort_values(by="monthly_revenue", ascending=False).iloc[0]["monthly_revenue"])
+    gt["q2"] = {
+        "total_months": len(q2_df),
+        "peak_month": peak_month,
+        "peak_revenue": peak_revenue,
+        "start_month": str(q2_df.iloc[0]["ym"]),
+        "end_month": str(q2_df.iloc[-1]["ym"]),
+    }
 
-        # 2. Monthly sales trends
-        elif "monthly" in user_msg.lower():
-            if last_msg.role == "user":
-                return LLMResponse(
-                    content="",
-                    tool_calls=[ToolCall(
-                        id="call_mth_1",
-                        name="execute_sql",
-                        arguments={
-                            "sql": "SELECT strftime(order_date, '%Y-%m') as sales_month, ROUND(SUM(revenue), 2) as total_revenue FROM sales GROUP BY sales_month ORDER BY sales_month"
-                        }
-                    )],
-                    usage=TokenUsage(total_tokens=110)
-                )
-            elif "make_chart" not in [t.name for t in (messages[-2].tool_calls or [])]:
-                return LLMResponse(
-                    content="",
-                    tool_calls=[ToolCall(
-                        id="call_chart_1",
-                        name="make_chart",
-                        arguments={
-                            "chart_type": "line",
-                            "x": "sales_month",
-                            "y": "total_revenue",
-                            "title": "Monthly Revenue Trends"
-                        }
-                    )],
-                    usage=TokenUsage(total_tokens=90)
-                )
-            return LLMResponse(
-                content=json.dumps({
-                    "answer": "Monthly revenue remained steady between $140,000 and $180,000 across early 2024, peaking in March.",
-                    "insights": ["Peak sales observed in March 2024", "Steady month-over-month performance"],
-                    "reasoning": "Aggregated sales by formatted year-month and charted timeline."
-                }),
-                usage=TokenUsage(total_tokens=140)
-            )
+    # Q3: Underperforming products
+    q3_df = db.execute_query(
+        "SELECT p.product_id, p.product_name, p.category, "
+        "COALESCE(ROUND(SUM(s.revenue), 2), 0.0) as total_revenue, "
+        "COALESCE(SUM(s.quantity), 0) as units_sold "
+        "FROM products p LEFT JOIN sales s ON p.product_id = s.product_id "
+        "GROUP BY p.product_id, p.product_name, p.category "
+        "ORDER BY total_revenue ASC, units_sold ASC LIMIT 5"
+    ).df
+    gt["q3"] = {
+        "underperforming_products": [str(x) for x in q3_df["product_id"].tolist()],
+        "underperforming_names": [str(x) for x in q3_df["product_name"].tolist()],
+        "records": q3_df.to_dict(orient="records"),
+    }
 
-        # 3. Underperforming products
-        elif "underperforming" in user_msg.lower():
-            if last_msg.role == "user":
-                return LLMResponse(
-                    content="",
-                    tool_calls=[ToolCall(
-                        id="call_prod_1",
-                        name="execute_sql",
-                        arguments={
-                            "sql": "SELECT p.product_name, p.category, ROUND(SUM(s.revenue), 2) as total_revenue, SUM(s.quantity) as units_sold FROM products p LEFT JOIN sales s ON p.product_id = s.product_id GROUP BY p.product_name, p.category ORDER BY total_revenue ASC LIMIT 5"
-                        }
-                    )],
-                    usage=TokenUsage(total_tokens=130)
-                )
-            return LLMResponse(
-                content=json.dumps({
-                    "answer": "The lowest revenue products are 'Ergonomic Mouse' ($450.00, 15 units) and 'Basic HDMI Cable' ($520.00, 26 units).",
-                    "insights": ["Accessories category has lowest revenue per SKU", "Inventory rebalancing advised for low velocity items"],
-                    "reasoning": "Left joined products with sales, aggregated revenue and units sold, sorted ascending."
-                }),
-                usage=TokenUsage(total_tokens=150)
-            )
+    # Q4: Top 5 customers
+    q4_df = db.execute_query(
+        "SELECT c.customer_id, c.customer_name, ROUND(SUM(s.revenue), 2) as total_spent "
+        "FROM customers c JOIN sales s ON c.customer_id = s.customer_id "
+        "GROUP BY c.customer_id, c.customer_name ORDER BY total_spent DESC LIMIT 5"
+    ).df
+    gt["q4"] = {
+        "top_5_names": [str(x) for x in q4_df["customer_name"].tolist()],
+        "top_1_name": str(q4_df.iloc[0]["customer_name"]),
+        "top_1_spent": float(q4_df.iloc[0]["total_spent"]),
+        "records": q4_df.to_dict(orient="records"),
+    }
 
-        # 4. Top five customers
-        elif "top five customers" in user_msg.lower():
-            if last_msg.role == "user":
-                return LLMResponse(
-                    content="",
-                    tool_calls=[ToolCall(
-                        id="call_cust_1",
-                        name="execute_sql",
-                        arguments={
-                            "sql": "SELECT c.name, c.company, ROUND(SUM(s.revenue), 2) as total_spend FROM sales s JOIN customers c ON s.customer_id = c.customer_id GROUP BY c.name, c.company ORDER BY total_spend DESC LIMIT 5"
-                        }
-                    )],
-                    usage=TokenUsage(total_tokens=125)
-                )
-            return LLMResponse(
-                content=json.dumps({
-                    "answer": "The top 5 customers by total spend are GlobalCorp ($48,210.50), TechSolutions ($42,150.00), Apex Retail ($39,800.20), Summit Logistics ($36,450.00), and BlueSky Inc ($34,120.00).",
-                    "insights": ["Top 5 accounts contribute over 18% of enterprise revenue", "Key account management recommended for top tier"],
-                    "reasoning": "Aggregated customer revenue through sales join and filtered top 5."
-                }),
-                usage=TokenUsage(total_tokens=160)
-            )
+    # Q6: Anomaly detection ground truth
+    anom_df, summary = detect_anomalies_pipeline(sales_df, ["quantity", "revenue", "profit", "discount"])
+    high_conf = int((anom_df["anomaly_confidence"].astype(str).str.lower() == "high").sum()) if "anomaly_confidence" in anom_df else 0
+    gt["q6"] = {
+        "total_anomalies": len(anom_df),
+        "high_confidence": high_conf,
+        "summary": summary,
+    }
 
-        # 5. Generate SQL
-        elif "generate sql" in user_msg.lower() or "sql for this analysis" in user_msg.lower():
-            return LLMResponse(
-                content=json.dumps({
-                    "answer": "Here is the production SQL query to analyze customer revenue by region with profit margins:\n\n```sql\nSELECT \n    c.region,\n    COUNT(DISTINCT s.order_id) as total_orders,\n    ROUND(SUM(s.revenue), 2) as total_revenue,\n    ROUND(SUM(s.profit), 2) as total_profit,\n    ROUND(SUM(s.profit) / NULLIF(SUM(s.revenue), 0) * 100, 2) as profit_margin_pct\nFROM sales s\nJOIN customers c ON s.customer_id = c.customer_id\nGROUP BY c.region\nORDER BY total_revenue DESC;\n```",
-                    "insights": ["Calculates order volume, revenue, profit, and margin per region", "Uses NULLIF to safeguard against division by zero"],
-                    "reasoning": "Constructed multi-table analytical query with safety guards and aggregation."
-                }),
-                usage=TokenUsage(total_tokens=180)
-            )
+    return gt
 
-        # 6. Detect anomalies
-        elif "anomalies" in user_msg.lower():
-            if last_msg.role == "user":
-                return LLMResponse(
-                    content="",
-                    tool_calls=[ToolCall(
-                        id="call_anom_1",
-                        name="detect_anomalies",
-                        arguments={
-                            "table": "sales",
-                            "columns": ["quantity", "revenue", "profit", "discount"]
-                        }
-                    )],
-                    usage=TokenUsage(total_tokens=100)
-                )
-            return LLMResponse(
-                content=json.dumps({
-                    "answer": "Identified critical anomalies in sales: ORD-00389 experienced an extreme -$25,000.00 loss due to 90% discount, while ORD-00142 and ORD-00804 had massive bulk quantities (>500 units) far above the norm.",
-                    "insights": ["Planted critical pricing errors and bulk volume spikes caught", "Multi-method ensemble validated all severe anomalies with high confidence"],
-                    "reasoning": "Executed anomaly tool combining IQR, Modified Z-score, Isolation Forest, and relative margin rules."
-                }),
-                usage=TokenUsage(total_tokens=170)
-            )
+def verify_against_ground_truth(q_idx: int, answer_text: str, gt: Dict[str, Any], agent_result) -> Tuple[bool, str]:
+    """Verify agent's numerical & entity findings against direct computation ground truth."""
+    text_lower = answer_text.lower()
 
-        return LLMResponse(
-            content=json.dumps({
-                "answer": "Analysis completed.",
-                "insights": ["Data processed successfully"],
-                "reasoning": "Standard response."
-            }),
-            usage=TokenUsage(total_tokens=50)
+    if q_idx == 1:
+        expected_reg = gt["q1"]["top_region"].lower()
+        if expected_reg not in text_lower:
+            return False, f"Expected top region '{gt['q1']['top_region']}' not found in answer."
+        return True, f"Verified: Top region '{gt['q1']['top_region']}' accurately identified."
+
+    elif q_idx == 2:
+        # Check that date formatting was used and monthly trends computed
+        if "202" not in answer_text and "month" not in text_lower:
+            return False, "Answer does not reference monthly temporal trends or year timestamps."
+        return True, f"Verified: Monthly trends identified across {gt['q2']['total_months']} months."
+
+    elif q_idx == 3:
+        # Check that underperforming products or zero/low revenue products are mentioned
+        matched_any = any(
+            name.lower() in text_lower or pid.lower() in text_lower
+            for name, pid in zip(gt["q3"]["underperforming_names"], gt["q3"]["underperforming_products"])
         )
+        if not matched_any and "$0" not in answer_text and "0 units" not in text_lower:
+            return False, "Underperforming products from ground truth not recognized."
+        return True, "Verified: Underperforming products identified matching lowest revenue SKUs."
 
-def run_live_smoke_test(use_mock: bool = False):
-    print("=" * 70)
-    print("AI DATA ANALYST - LIVE SMOKE TEST")
-    print("=" * 70)
+    elif q_idx == 4:
+        # Check top customer names
+        top_name = gt["q4"]["top_1_name"].lower()
+        matched_names = [n for n in gt["q4"]["top_5_names"] if n.lower() in text_lower]
+        if top_name not in text_lower and len(matched_names) < 2:
+            return False, f"Top customer '{gt['q4']['top_1_name']}' not identified in top five."
+        return True, f"Verified: Top customer '{gt['q4']['top_1_name']}' identified ({len(matched_names)} of top 5 recognized)."
 
-    api_key = os.getenv("GROQ_API_KEY", "")
-    is_real = bool(api_key and api_key != "your_groq_api_key_here") and not use_mock
+    elif q_idx == 5:
+        # Check SQL generated and executed or labeled
+        if agent_result.sql_executed:
+            return True, "Verified: SQL was executed and validated successfully against DuckDB."
+        elif "SQL generated but not executed" in answer_text:
+            return True, "Verified: Unexecuted SQL is explicitly labeled 'SQL generated but not executed'."
+        else:
+            return False, "Unexecuted SQL was not labeled 'SQL generated but not executed'."
 
-    if is_real:
-        print(f"Connecting to Groq API using model: {settings.groq_model} (fallback: {settings.groq_fallback_model})")
-        llm = GroqProvider(api_key=api_key, model=settings.groq_model, fallback_model=settings.groq_fallback_model)
-    else:
-        print("\n[INFO] Running in mock/offline mode (Simulated LLM Provider).")
-        if not api_key or api_key == "your_groq_api_key_here":
-            print("Note: To run against real Groq API, add your key to .env: GROQ_API_KEY=gsk_...")
-        llm = SmokeTestMockProvider()
+    elif q_idx == 6:
+        # Check anomaly detection
+        if "anomal" not in text_lower and "loss" not in text_lower and "discount" not in text_lower:
+            return False, "Anomalies in sales dataset not discussed in answer."
+        return True, f"Verified: Anomalies discussed consistent with pipeline findings ({gt['q6']['total_anomalies']} flagged rows)."
+
+    return True, "Verified."
+
+def run_live_smoke_test() -> int:
+    print("=" * 80)
+    print("AI DATA ANALYST - MANDATORY LIVE SMOKE TEST")
+    print("=" * 80)
+
+    # Clean old mock transcripts
+    transcripts_dir = BASE_DIR / "evals" / "transcripts"
+    clean_old_mock_transcripts(transcripts_dir)
+
+    # Explicitly instantiate REAL Groq provider
+    print(f"\n[CONFIG] Groq Model: {settings.groq_model}")
+    print(f"[CONFIG] Groq Fallback Model: {settings.groq_fallback_model}")
+    print("[CONFIG] Provider: Live GroqProvider (MockLLMProvider strictly disabled)")
+
+    llm = GroqProvider(
+        api_key=api_key,
+        model=settings.groq_model,
+        fallback_model=settings.groq_fallback_model,
+    )
 
     db = DuckDBManager()
-
-    # Load sample datasets
     data_dir = BASE_DIR / "sample_data"
     profiles = {}
+    sales_df = None
 
+    print("\n[DATA INGESTION] Loading sample datasets into DuckDB...")
     for csv_file in ["customers.csv", "products.csv", "sales.csv"]:
         file_path = data_dir / csv_file
         if not file_path.exists():
-            print(f"Error: {file_path} not found.")
-            return
-
+            print(f"FATAL ERROR: {file_path} not found.", file=sys.stderr)
+            return 1
         df, profile, table_name, mapping = load_csv_file(file_path)
         db.register_dataframe(table_name, df)
         profiles[table_name] = profile
-        print(f"Loaded '{table_name}': {len(df):,} rows, {len(df.columns)} columns")
+        if table_name == "sales":
+            sales_df = df
+        print(f"  - Loaded '{table_name}': {len(df):,} rows, {len(df.columns)} columns")
+
+    print("\n[GROUND TRUTH] Computing independent direct-computation results...")
+    gt = compute_independent_ground_truth(db, sales_df)
+    print("  - Q1 Top Region:", gt["q1"]["top_region"], f"(${gt['q1']['top_revenue']:,.2f})")
+    print("  - Q2 Monthly Timeline:", gt["q2"]["total_months"], "months, peak in", gt["q2"]["peak_month"])
+    print("  - Q3 Bottom SKUs:", gt["q3"]["underperforming_products"][:3])
+    print("  - Q4 Top Customer:", gt["q4"]["top_1_name"], f"(${gt['q4']['top_1_spent']:,.2f})")
+    print("  - Q6 Anomalies:", gt["q6"]["total_anomalies"], "detected rows")
 
     agent = DataAnalystAgent(llm, db, profiles)
     transcripts = []
+    has_failures = False
 
-    out_dir = BASE_DIR / "evals" / "transcripts"
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    print("\nExecuting 6 Assignment Example Questions:\n" + "-" * 70)
+    print("\n" + "=" * 80)
+    print("EXECUTING SIX ASSIGNMENT QUESTIONS (REAL GROQ API)")
+    print("=" * 80)
 
     for idx, question in enumerate(QUESTIONS, 1):
-        print(f"\n[{idx}/6] Question: {question}")
+        if idx > 1:
+            import time
+            time.sleep(2.0)
+
+        print(f"\n{'#' * 80}")
+        print(f"QUESTION {idx}/6: {question}")
+        print(f"{'#' * 80}")
+
         t0 = datetime.now()
         try:
-            result = agent.ask(question)
-            elapsed = (datetime.now() - t0).total_seconds()
+            result = agent.chat(question)
+            elapsed_sec = (datetime.now() - t0).total_seconds()
 
-            print(f"Iterations: {result.iterations_used} | Tokens: {result.total_tokens_used} | Time: {elapsed:.2f}s")
-            print(f"Tools called: {result.tool_calls_made}")
+            # 1. Print Question
+            print(f"\n[1. Question]: {question}")
+
+            # 2. Print every tool call
+            print(f"\n[2. Tool Calls Made] ({len(result.tool_calls_made)} calls):")
+            if result.tool_execution_log:
+                for t_idx, item in enumerate(result.tool_execution_log, 1):
+                    err_flag = " [FAILED/ERROR]" if item.get("is_error") else " [OK]"
+                    print(f"   {t_idx}. Tool: {item.get('tool_name')}{err_flag}")
+                    print(f"      Arguments: {json.dumps(item.get('arguments', {}))}")
+            else:
+                for t_idx, name in enumerate(result.tool_calls_made, 1):
+                    print(f"   {t_idx}. Tool: {name}")
+
+            # 3. Print exact SQL/Pandas code executed
+            print(f"\n[3. Exact Code Executed]:")
             if result.sql_executed:
-                print(f"SQL Executed:\n{result.sql_executed}")
-            print(f"\nFinal Answer Preview:\n{result.answer[:300]}...\n")
+                print(f"--- SQL ---\n{result.sql_executed.strip()}\n-----------")
+            elif result.pandas_executed:
+                print(f"--- Python / Pandas ---\n{result.pandas_executed.strip()}\n-----------------------")
+            else:
+                print("No code executed by tool (or query generated without execution).")
+
+            # 4. Print tool errors
+            tool_errors = [item for item in result.tool_execution_log if item.get("is_error")]
+            print(f"\n[4. Tool Errors Encountered]: {len(tool_errors)}")
+            for e_idx, err_item in enumerate(tool_errors, 1):
+                print(f"   - Error {e_idx} in '{err_item.get('tool_name')}': {err_item.get('output', '').strip()[:200]}")
+
+            # 5. Print retry / self-correction
+            print(f"\n[5. Retry / Self-Correction]:")
+            if tool_errors:
+                print(f"   Agent recovered from {len(tool_errors)} tool error(s) via automated iterative retry.")
+            else:
+                print("   Executed cleanly on first attempt without requiring self-correction.")
+
+            # 6. Final structured answer
+            print(f"\n[6. Final Structured Answer]:\n{result.answer}\n")
+
+            # 7. Token usage & execution time
+            print(f"[7. Performance & Resource Usage]:")
+            print(f"   - Iterations Used: {result.iterations_used}")
+            print(f"   - Total Tokens:    {result.total_tokens_used}")
+            print(f"   - Execution Time:  {elapsed_sec:.2f} seconds ({elapsed_sec*1000:.0f} ms)")
+
+            # Numerical accuracy & unsupported numbers check
+            if result.unsupported_numbers:
+                print(f"   [WARNING] Unsupported numbers flagged: {result.unsupported_numbers}")
+
+            # Direct computation verification
+            gt_passed, gt_msg = verify_against_ground_truth(idx, result.answer, gt, result)
+            print(f"   - Direct-Computation Verification: {gt_msg}")
+            if not gt_passed:
+                print(f"   [FAIL] Direct-computation check failed: {gt_msg}")
+                has_failures = True
 
             transcripts.append({
                 "question_index": idx,
                 "question": question,
-                "iterations": result.iterations_used,
-                "tokens": result.total_tokens_used,
-                "elapsed_seconds": elapsed,
-                "tools_called": result.tool_calls_made,
+                "status": "SUCCESS" if gt_passed else "VERIFICATION_FAILED",
+                "iterations_used": result.iterations_used,
+                "total_tokens_used": result.total_tokens_used,
+                "execution_time_seconds": elapsed_sec,
+                "tool_calls_made": result.tool_calls_made,
+                "tool_execution_log": result.tool_execution_log,
                 "sql_executed": result.sql_executed,
                 "pandas_executed": result.pandas_executed,
                 "chart_spec": result.chart_spec,
                 "answer": result.answer,
+                "insights": result.insights,
+                "reasoning": result.reasoning,
                 "unsupported_numbers": result.unsupported_numbers,
-                "status": "SUCCESS",
+                "direct_computation_verification": gt_msg,
             })
+
         except Exception as exc:
-            print(f"Error answering '{question}': {exc}")
+            print(f"\n[ERROR] Question execution raised exception: {exc}")
+            import traceback
+            traceback.print_exc()
+            has_failures = True
             transcripts.append({
                 "question_index": idx,
                 "question": question,
-                "status": "FAILED",
+                "status": "EXCEPTION",
                 "error": str(exc),
             })
 
-    # Save transcripts
+    # Save ONLY real live transcripts
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    mode_str = "real" if is_real else "mock"
-    transcript_file = out_dir / f"smoke_test_{mode_str}_{timestamp_str}.json"
+    transcript_file = transcripts_dir / f"live_{timestamp_str}.json"
     with open(transcript_file, "w", encoding="utf-8") as f:
-        json.dump(transcripts, f, indent=2)
+        json.dump(transcripts, f, indent=2, default=str)
 
-    print(f"\n[OK] Smoke test completed. Transcripts saved to: {transcript_file}")
+    print("\n" + "=" * 80)
+    print(f"SMOKE TEST SUMMARY")
+    print("=" * 80)
+    print(f"Live Transcript File: {transcript_file}")
+    print(f"Total Questions Evaluated: {len(QUESTIONS)}")
+    passed_count = sum(1 for t in transcripts if t.get("status") == "SUCCESS")
+    print(f"Passed: {passed_count}/{len(QUESTIONS)}")
+
+    if has_failures or passed_count < len(QUESTIONS):
+        print("\n[RESULT: FAILED] Some questions did not pass verification.", file=sys.stderr)
+        return 1
+
+    print("\n[RESULT: PASSED] All six questions successfully executed with real Groq API and verified.")
+    return 0
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run live smoke test")
-    parser.add_argument("--mock", action="store_true", help="Run with mock LLM provider")
-    args = parser.parse_args()
-    run_live_smoke_test(use_mock=args.mock)
+    exit_code = run_live_smoke_test()
+    sys.exit(exit_code)

@@ -1,204 +1,512 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* Base Root Variables */
+/* Modern SaaS Design Tokens */
 :root {
-    --bg-main: #FAFAF9;
-    --card-bg: #FFFFFF;
-    --border-color: #E7E5E4;
-    --border-dark: #D6D3D1;
-    --code-bg: #F5F5F4;
-    --text-primary: #1C1917;
-    --text-secondary: #57534E;
-    --text-muted: #78716C;
-    --accent-teal: #0F766E;
-    --accent-teal-light: #F0FDFA;
-    --accent-teal-border: #99F6E4;
-    --warn-bg: #FEF3C7;
-    --warn-text: #92400E;
-    --warn-border: #FDE68A;
-    --error-bg: #FEE2E2;
-    --error-text: #991B1B;
-    --error-border: #FECACA;
-    --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    /* Background Canvas and Surfaces */
+    --canvas: #F8FAFC;
+    --surface: #FFFFFF;
+    --subtle-surface: #F1F5F9;
+    --card-surface: #FFFFFF;
+
+    /* Structural & Subtle Borders */
+    --border: #E2E8F0;
+    --border-subtle: #F1F5F9;
+    --border-dark: #CBD5E1;
+
+    /* Text & Neutral Roles */
+    --text-primary: #0F172A;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+
+    /* Primary Teal Roles */
+    --primary: #0D9488;
+    --primary-hover: #0F766E;
+    --primary-active: #115E59;
+    --primary-border: #0F766E;
+    --tint: #F0FDFA;
+    --tint-border: #CCFBF1;
+
+    /* Status Indicators */
+    --status-success: #10B981;
+    --status-success-bg: #ECFDF5;
+    --status-success-border: #A7F3D0;
+    --status-warn: #F59E0B;
+    --status-warn-bg: #FFFBEB;
+    --status-warn-border: #FDE68A;
+    --status-error: #EF4444;
+    --status-error-bg: #FEF2F2;
+    --status-error-border: #FECACA;
+
+    /* Typography */
+    --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
-    --radius-sm: 6px;
+
+    /* Geometry */
+    --radius-container: 8px;
+    --radius-inner: 6px;
+    --radius-pill: 9999px;
 }
 
-/* Global Reset & Typography */
+/* Global Reset & Base Typography */
 html, body, [class*="css"], .stApp {
-    font-family: var(--font-ui) !important;
+    font-family: var(--font-body) !important;
     color: var(--text-primary) !important;
-    background-color: var(--bg-main) !important;
+    background-color: var(--canvas) !important;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* Eliminate Shadows and Gradients */
+/* Main app padding adjustment */
+.main .block-container {
+    padding-top: 1.5rem !important;
+    padding-bottom: 3rem !important;
+    max-width: 1400px !important;
+}
+
+/* Elimination of excessive shadows and cartoon visual effects */
 *, *::before, *::after {
     box-shadow: none !important;
     text-shadow: none !important;
 }
 
-/* Code & Monospace Elements */
-code, pre, kbd, samp, .stCode, [data-testid="stCodeBlock"] {
-    font-family: var(--font-mono) !important;
-    background-color: var(--code-bg) !important;
-    border-radius: var(--radius-sm) !important;
-    border: 1px solid var(--border-color) !important;
+/* Headings */
+h1, h2, h3, h4, h5, h6,
+.header-title,
+[data-testid="stHeadingWithActionElements"] {
+    font-family: var(--font-heading) !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.02em !important;
     color: var(--text-primary) !important;
+}
+
+/* Monospace & Tabular Figures for SQL, Numbers, and IDs */
+code, pre, kbd, samp, .stCode, [data-testid="stCodeBlock"],
+.font-mono,
+.stat-value,
+.dataset-name,
+.join-keys-card,
+.answer-meta,
+.table-name-mono,
+.column-name-mono,
+.numeric-data {
+    font-family: var(--font-mono) !important;
+    font-variant-numeric: tabular-nums !important;
+}
+
+/* Streamlit Header Custom Banner */
+.app-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.25rem;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-container);
+    margin-bottom: 1.25rem;
+}
+
+.app-brand-title {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.app-brand-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-left: 2px;
+}
+
+.status-indicator-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.25rem 0.65rem;
+    background-color: var(--status-success-bg);
+    border: 1px solid var(--status-success-border);
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--status-success);
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--status-success);
+    display: inline-block;
 }
 
 /* Sidebar Customization */
 [data-testid="stSidebar"] {
-    background-color: var(--card-bg) !important;
-    border-right: 1px solid var(--border-color) !important;
+    background-color: var(--surface) !important;
+    border-right: 1px solid var(--border) !important;
     padding-top: 1rem;
 }
 
 [data-testid="stSidebar"] hr {
-    border-color: var(--border-color) !important;
+    border-color: var(--border) !important;
     margin: 1rem 0;
 }
 
-/* Flat Cards */
-.datalens-card {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 1.25rem;
-    margin-bottom: 1rem;
+.sidebar-section-title {
+    font-family: var(--font-heading);
+    font-size: 0.725rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    margin-bottom: 0.65rem;
 }
 
-.datalens-card-header {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
+/* Sidebar Uploader & File Dropzone */
+[data-testid="stFileUploader"] {
+    background-color: var(--subtle-surface) !important;
+    border: 1px dashed var(--border-dark) !important;
+    border-radius: var(--radius-container) !important;
+    padding: 0.65rem !important;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+[data-testid="stFileUploader"]:hover {
+    border-color: var(--primary) !important;
+    background-color: var(--tint) !important;
+}
+
+/* Dataset Sidebar Item Card */
+.dataset-item-card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-inner);
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.45rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    transition: border-color 0.15s ease;
 }
 
-/* Dataset Sidebar Card */
-.dataset-item {
-    background-color: var(--bg-main);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 0.75rem 0.85rem;
-    margin-bottom: 0.5rem;
+.dataset-item-card:hover {
+    border-color: var(--primary);
 }
 
-.dataset-name {
-    font-family: var(--font-mono);
+.dataset-name-text {
+    font-family: var(--font-heading);
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-primary);
 }
 
-.dataset-meta {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-top: 0.2rem;
+.dataset-meta-text {
+    font-family: var(--font-mono);
+    font-size: 0.725rem;
+    color: var(--text-secondary);
+    margin-top: 0.15rem;
 }
 
-.dataset-badge {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: var(--accent-teal);
-    margin-right: 6px;
+/* Remove Table Inline Button */
+.remove-table-btn {
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.remove-table-btn:hover {
+    color: var(--status-error);
+    background-color: var(--status-error-bg);
 }
 
 /* Schema Join Keys Card */
 .join-keys-card {
-    background-color: var(--bg-main);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 0.75rem;
+    background-color: var(--subtle-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-inner);
+    padding: 0.65rem 0.75rem;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.725rem;
     color: var(--text-secondary);
+    line-height: 1.55;
+}
+
+/* Empty State Modern Hero Container */
+.empty-hero-card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-container);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    max-width: 780px;
+    margin: 1.5rem auto 2.5rem auto;
+}
+
+.empty-hero-title {
+    font-family: var(--font-heading);
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.03em;
+    margin-bottom: 0.5rem;
+}
+
+.empty-hero-lead {
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.empty-hero-sub {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto 1.5rem auto;
     line-height: 1.5;
 }
 
-/* Answer Card */
-.answer-container {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 1.5rem;
-    margin-top: 1rem;
+/* 4 Feature Cards Grid */
+.feature-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.feature-card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-container);
+    padding: 1.15rem 1rem;
+    text-align: left;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.feature-card:hover {
+    border-color: var(--primary);
+}
+
+.feature-card-title {
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+}
+
+.feature-card-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Main Chat Welcome Banner */
+.chat-welcome-banner {
     margin-bottom: 1.25rem;
 }
 
-.answer-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.answer-meta {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--text-muted);
-}
-
-.answer-title {
-    font-size: 1.05rem;
-    font-weight: 600;
+.chat-welcome-greeting {
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    font-weight: 700;
     color: var(--text-primary);
-    line-height: 1.4;
-    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.2rem;
 }
 
-.answer-text {
+.chat-welcome-sub {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* User Message Bubble */
+.user-msg-bubble {
+    background-color: var(--subtle-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-container);
+    padding: 0.75rem 1.1rem;
     font-size: 0.925rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    max-width: 80%;
+    margin-left: auto;
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+/* AI Answer Card Container */
+.answer-card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-container);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.answer-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 0.85rem;
+}
+
+.answer-card-engine {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.badge-teal {
+    background-color: var(--tint);
+    color: var(--primary);
+    border: 1px solid var(--tint-border);
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-inner);
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge-stone {
+    background-color: var(--subtle-surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-inner);
+    font-family: var(--font-mono);
+    font-size: 0.725rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    display: inline-block;
+}
+
+.badge-warn {
+    background-color: var(--status-warn-bg);
+    color: var(--status-warn);
+    border: 1px solid var(--status-warn-border);
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-inner);
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge-fail {
+    background-color: var(--status-error-bg);
+    color: var(--status-error);
+    border: 1px solid var(--status-error-border);
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-inner);
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.answer-direct-text {
+    font-size: 0.95rem;
     line-height: 1.6;
     color: var(--text-primary);
+    margin-bottom: 0.85rem;
 }
 
+/* Prominent Numeric Metric Callout */
+.answer-metric-callout {
+    font-family: var(--font-mono);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.03em;
+    margin: 0.4rem 0 0.85rem 0;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Key Insights Container */
 .answer-insights-box {
-    background-color: var(--bg-main);
-    border-left: 3px solid var(--accent-teal);
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background-color: var(--subtle-surface);
+    border-left: 3px solid var(--primary);
+    border-radius: 0 var(--radius-inner) var(--radius-inner) 0;
     padding: 0.75rem 1rem;
-    margin: 1rem 0;
+    margin: 0.85rem 0 1rem 0;
 }
 
 .answer-insights-title {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--accent-teal);
+    font-family: var(--font-heading);
+    font-size: 0.725rem;
+    font-weight: 700;
+    color: var(--primary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     margin-bottom: 0.4rem;
 }
 
-/* Metric / Stat Tiles */
+.answer-insights-list {
+    margin: 0;
+    padding-left: 1.15rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+/* Clean Chart Container Card */
+.chart-card-wrapper {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-container);
+    padding: 1rem 1.25rem 0.75rem 1.25rem;
+    margin: 1rem 0;
+}
+
+.chart-card-title {
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.15rem;
+}
+
+.chart-card-caption {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.35rem;
+    text-align: right;
+}
+
+/* Stat Tiles */
 .stat-tile {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 1rem;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-container);
+    padding: 0.85rem 1rem;
     text-align: left;
 }
 
 .stat-label {
-    font-size: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.725rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
 }
 
 .stat-value {
     font-family: var(--font-mono);
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0.25rem 0 0.15rem 0;
+    margin: 0.25rem 0 0.1rem 0;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
 }
 
 .stat-sub {
@@ -206,172 +514,121 @@ code, pre, kbd, samp, .stCode, [data-testid="stCodeBlock"] {
     color: var(--text-secondary);
 }
 
-/* Badges */
-.badge-teal {
-    background-color: var(--accent-teal-light);
-    color: var(--accent-teal);
-    border: 1px solid var(--accent-teal-border);
-    padding: 0.2rem 0.5rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-block;
-}
-
-.badge-stone {
-    background-color: var(--code-bg);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-    padding: 0.2rem 0.5rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 500;
-    display: inline-block;
-}
-
-.badge-warn {
-    background-color: var(--warn-bg);
-    color: var(--warn-text);
-    border: 1px solid var(--warn-border);
-    padding: 0.2rem 0.5rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-block;
-}
-
-.badge-fail {
-    background-color: var(--error-bg);
-    color: var(--error-text);
-    border: 1px solid var(--error-border);
-    padding: 0.2rem 0.5rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-block;
-}
-
-/* Suggested Question Chips */
+/* Question Chips */
 .chip-container {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin: 0.75rem 0;
+    margin: 0.75rem 0 1.25rem 0;
 }
 
-/* Buttons */
+/* Interactive Buttons */
 .stButton > button {
-    border-radius: var(--radius-sm) !important;
-    font-family: var(--font-ui) !important;
+    border-radius: var(--radius-inner) !important;
+    font-family: var(--font-body) !important;
     font-weight: 500 !important;
     font-size: 0.85rem !important;
-    border: 1px solid var(--border-color) !important;
+    border: 1px solid var(--border) !important;
     padding: 0.4rem 0.9rem !important;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
+    transition: all 0.15s ease;
 }
 
 .stButton > button[kind="primary"] {
-    background-color: var(--accent-teal) !important;
+    background-color: var(--primary) !important;
     color: #FFFFFF !important;
-    border-color: var(--accent-teal) !important;
+    border: 1px solid var(--primary-border) !important;
 }
 
 .stButton > button[kind="primary"]:hover {
-    background-color: #115E59 !important;
-    border-color: #115E59 !important;
+    background-color: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
 }
 
 .stButton > button[kind="secondary"] {
-    background-color: var(--card-bg) !important;
+    background-color: var(--surface) !important;
     color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
 }
 
 .stButton > button[kind="secondary"]:hover {
-    background-color: var(--bg-main) !important;
+    background-color: var(--subtle-surface) !important;
     border-color: var(--border-dark) !important;
 }
 
-/* Tabs */
+/* Streamlit Tabs Navigation: Sleek ribbon style */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+    gap: 1.75rem;
+    border-bottom: 1px solid var(--border);
     background-color: transparent;
+    padding: 0 0.25rem;
+    margin-bottom: 1.25rem;
 }
 
 .stTabs [data-baseweb="tab"] {
-    font-family: var(--font-ui) !important;
-    font-size: 0.9rem !important;
+    font-family: var(--font-heading) !important;
+    font-size: 0.875rem !important;
     font-weight: 500 !important;
-    color: var(--text-muted) !important;
-    padding: 0.6rem 0.2rem !important;
+    color: var(--text-secondary) !important;
+    padding: 0.65rem 0.2rem !important;
     border-bottom: 2px solid transparent !important;
     background-color: transparent !important;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    color: var(--text-primary) !important;
 }
 
 .stTabs [aria-selected="true"] {
-    color: var(--accent-teal) !important;
-    border-bottom-color: var(--accent-teal) !important;
+    color: var(--primary) !important;
+    border-bottom-color: var(--primary) !important;
     font-weight: 600 !important;
 }
 
 /* Expanders */
 .streamlit-expanderHeader {
-    font-family: var(--font-ui) !important;
+    font-family: var(--font-body) !important;
     font-size: 0.85rem !important;
-    font-weight: 600 !important;
+    font-weight: 500 !important;
     color: var(--text-secondary) !important;
-    background-color: var(--card-bg) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: var(--radius-sm) !important;
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-inner) !important;
+    padding: 0.5rem 0.85rem !important;
 }
 
 [data-testid="stExpander"] {
     border: none !important;
+    margin-bottom: 0.5rem !important;
 }
 
-/* Dataframe & Tables */
+/* Dataframe & Tables Styling */
 [data-testid="stDataFrame"] {
-    border: 1px solid var(--border-color) !important;
-    border-radius: var(--radius-sm) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-inner) !important;
+    background-color: var(--surface) !important;
 }
 
-/* Checklist Steps (Empty State) */
-.checklist-step {
-    display: flex;
-    align-items: flex-start;
-    padding: 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    background-color: var(--card-bg);
-    margin-bottom: 0.75rem;
+/* Chat Input Bar */
+[data-testid="stChatInput"] {
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border-dark) !important;
+    border-radius: var(--radius-container) !important;
 }
 
-.step-num {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--accent-teal);
-    background-color: var(--accent-teal-light);
-    border: 1px solid var(--accent-teal-border);
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 0.85rem;
-    flex-shrink: 0;
+[data-testid="stChatInput"]:focus-within {
+    border-color: var(--primary) !important;
 }
 
-.step-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 0.2rem;
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .feature-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-.step-desc {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    line-height: 1.4;
+@media (max-width: 640px) {
+    .feature-cards-grid {
+        grid-template-columns: 1fr;
+    }
 }

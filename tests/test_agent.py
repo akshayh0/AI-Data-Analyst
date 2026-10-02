@@ -46,6 +46,7 @@ def agent_environment():
     })
     customers_df = pd.DataFrame({
         "customer_id": ["C-1", "C-2", "C-3"],
+        "customer_name": ["Customer 1", "Customer 2", "Customer 3"],
         "region": ["North", "South", "North"],
     })
     products_df = pd.DataFrame({
@@ -146,6 +147,62 @@ def test_sql_error_self_correction(agent_environment):
     assert result.data_preview is not None
     assert "revenue" in result.data_preview.columns
     assert "Total revenue retrieved successfully." in result.answer
+
+def test_customer_column_error_self_correction(agent_environment):
+    """
+    Regression test: When LLM initially queries non-existent 'c.name' on customers,
+    the exact Binder Error is returned, agent self-corrects to 'c.customer_name',
+    and produces the verified final answer.
+    """
+    db, profiles = agent_environment
+
+    # 1. Invalid query referencing non-existent 'c.name'
+    resp1 = LLMResponse(
+        content="Querying top customers by spend...",
+        tool_calls=[
+            ToolCall(
+                id="call_err_name",
+                name="run_sql",
+                arguments={
+                    "query": "SELECT c.name, SUM(s.revenue) as total_spend FROM sales s JOIN customers c ON s.customer_id = c.customer_id GROUP BY c.name ORDER BY total_spend DESC LIMIT 5"
+                },
+            )
+        ],
+    )
+    # 2. Self-correction after receiving DuckDB column error
+    resp2 = LLMResponse(
+        content="Detected column error. Correcting to c.customer_name based on table schema...",
+        tool_calls=[
+            ToolCall(
+                id="call_corr_name",
+                name="run_sql",
+                arguments={
+                    "query": "SELECT c.customer_name, SUM(s.revenue) as total_spend FROM sales s JOIN customers c ON s.customer_id = c.customer_id GROUP BY c.customer_name ORDER BY total_spend DESC LIMIT 5"
+                },
+            )
+        ],
+    )
+    # 3. Final answer with verified data
+    resp3 = LLMResponse(
+        content=json.dumps({
+            "answer": "The top customer is Customer 1 with $200.00 in spend.",
+            "insights": ["Customer 1 is the leading account"],
+            "reasoning": "Aggregated sales revenue joined on customer_id using customer_name.",
+        })
+    )
+
+    mock_llm = MockLLMProvider([resp1, resp2, resp3])
+    agent = DataAnalystAgent(mock_llm, db, profiles)
+
+    result = agent.ask("What are the top five customers?")
+
+    assert result.iterations_used == 3
+    assert result.sql_executed is not None
+    assert "customer_name" in result.sql_executed
+    assert result.data_preview is not None
+    assert "customer_name" in result.data_preview.columns
+    assert len(result.data_preview) > 0
+    assert "Customer 1" in result.answer
 
 def test_max_iterations_ceiling(agent_environment):
     db, profiles = agent_environment

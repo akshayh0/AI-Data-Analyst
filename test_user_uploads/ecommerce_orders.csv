@@ -1,0 +1,26 @@
+order_id,customer_region,product_category,order_value,quantity,discount_pct,return_status
+ORD-1001,North America,Electronics,1250.0,2,0.05,Kept
+ORD-1002,Europe,Furniture,850.5,1,0.1,Kept
+ORD-1003,Asia Pacific,Office Supplies,120.0,5,0.0,Kept
+ORD-1004,North America,Clothing,230.25,3,0.15,Returned
+ORD-1005,Europe,Electronics,3100.0,4,0.08,Kept
+ORD-1006,Latin America,Furniture,450.0,1,0.0,Kept
+ORD-1007,Asia Pacific,Electronics,2100.5,3,0.05,Kept
+ORD-1008,North America,Books,85.0,4,0.0,Kept
+ORD-1009,Europe,Office Supplies,310.0,8,0.2,Kept
+ORD-1010,North America,Furniture,1450.0,2,0.12,Returned
+ORD-1011,Asia Pacific,Clothing,195.0,2,0.05,Kept
+ORD-1012,Europe,Books,65.5,3,0.0,Kept
+ORD-1013,North America,Electronics,4200.0,5,0.1,Kept
+ORD-1014,Latin America,Office Supplies,140.0,4,0.0,Kept
+ORD-1015,Asia Pacific,Furniture,920.0,1,0.05,Kept
+ORD-1016,North America,Clothing,410.0,6,0.2,Kept
+ORD-1017,Europe,Electronics,1850.0,2,0.0,Kept
+ORD-1018,Asia Pacific,Books,110.0,5,0.1,Kept
+ORD-1019,North America,Furniture,2200.0,3,0.15,Kept
+ORD-1020,Europe,Clothing,320.0,4,0.05,Returned
+ORD-1021,Latin America,Electronics,1600.0,2,0.05,Kept
+ORD-1022,North America,Office Supplies,95.0,3,0.0,Kept
+ORD-1023,Asia Pacific,Furniture,1150.0,2,0.1,Kept
+ORD-1024,Europe,Electronics,2750.0,3,0.08,Kept
+ORD-1025,North America,Books,145.0,6,0.15,Kept

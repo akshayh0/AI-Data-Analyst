@@ -7,21 +7,21 @@ import streamlit as st
 from app.tools.anomaly_tool import detect_anomalies_pipeline
 
 def render_anomalies_tab():
-    """Render anomaly detection audit, consensus tiles, and interactive record inspector."""
+    """Render anomaly detection audit, consensus tiles, and interactive record table."""
     if not st.session_state.table_profiles:
-        st.info("No datasets loaded. Please upload a CSV file or load sample data from the sidebar.")
+        st.info("No datasets loaded. Please upload a CSV file or load sample datasets from the sidebar.")
         return
 
-    # Trigger scan button & CSV export
+    # Header and Actions
     head_col1, head_col2, head_col3 = st.columns([3, 1, 1])
     with head_col1:
         st.markdown(
             """
-            <div style="font-size: 1.15rem; font-weight: 700; color: #1C1917;">
-                Anomalies & Outliers
+            <div style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; color: #0F172A;">
+                Anomaly Detection
             </div>
-            <div style="font-size: 0.825rem; color: #78716C;">
-                Multi-method statistical (IQR, Modified Z-score) and machine learning (Isolation Forest) detection.
+            <div style="font-size: 0.825rem; color: #64748B;">
+                Identify unusual records and understand why they were flagged.
             </div>
             """,
             unsafe_allow_html=True,
@@ -34,7 +34,6 @@ def render_anomalies_tab():
 
     # Run detection on all loaded tables if not cached
     all_flagged_rows = []
-    affected_tables: Dict[str, int] = {}
     total_dataset_rows = sum(len(df) for df in st.session_state.dataframes.values())
 
     for t_name, df in st.session_state.dataframes.items():
@@ -45,18 +44,33 @@ def render_anomalies_tab():
 
         flagged_df, summary = st.session_state.anomalies_cache[t_name]
         if not flagged_df.empty:
-            affected_tables[t_name] = len(flagged_df)
             for idx, r in flagged_df.iterrows():
-                # Extract first identifying column
+                # Extract identifying column
                 id_col = next((c for c in df.columns if "id" in c.lower()), df.columns[0])
                 row_id_val = str(r.get(id_col, idx))
 
+                # Extract primary flagged numeric column and value
+                col_name = "Multiple"
+                col_val = "-"
+                reasons = str(r.get("anomaly_reasons", ""))
+                for candidate in ["revenue", "profit", "quantity", "discount", "price", "temperature_c"]:
+                    if candidate in reasons.lower() and candidate in r:
+                        col_name = candidate
+                        val_num = r[candidate]
+                        col_val = f"${val_num:,.2f}" if "rev" in candidate or "prof" in candidate or "price" in candidate else f"{val_num}"
+                        break
+
+                methods_str = str(r.get("anomaly_methods", "Ensemble"))
+                confidence = "High Confidence" if r.get("methods_agreed", 1) >= 2 else "Possible"
+
                 all_flagged_rows.append({
-                    "Row ID": row_id_val,
+                    "Record": row_id_val,
                     "Table": t_name,
-                    "Confidence": "High confidence" if r.get("anomaly_confidence") == "high" else "Possible",
-                    "Methods Agreed": r.get("methods_agreed", 1),
-                    "Reason": r.get("anomaly_reasons", "Statistical outlier"),
+                    "Column": col_name,
+                    "Value": col_val,
+                    "Method": methods_str,
+                    "Severity": confidence,
+                    "Reason": reasons,
                     "_full_record": r.to_dict(),
                 })
 
@@ -76,42 +90,53 @@ def render_anomalies_tab():
 
     st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
 
-    # Summary Tiles
-    tile1, tile2, tile3 = st.columns(3)
+    # 4 Top Metrics: Total Records, Anomalies, High Confidence, Possible
     total_flagged = len(all_flagged_rows)
-    high_conf_count = sum(1 for r in all_flagged_rows if r["Confidence"] == "High confidence")
-    flagged_pct = (total_flagged / total_dataset_rows * 100) if total_dataset_rows else 0.0
+    high_conf_count = sum(1 for r in all_flagged_rows if r["Severity"] == "High Confidence")
+    possible_count = total_flagged - high_conf_count
 
-    with tile1:
+    m1, m2, m3, m4 = st.columns(4)
+    with m1:
         st.markdown(
             f"""
             <div class="stat-tile">
-                <div class="stat-label">Flagged Records</div>
-                <div class="stat-value">{total_flagged:,} / {total_dataset_rows:,}</div>
-                <div class="stat-sub">{flagged_pct:.2f}% of total dataset</div>
+                <div class="stat-label">Total Records</div>
+                <div class="stat-value">{total_dataset_rows:,}</div>
+                <div class="stat-sub">Across all tables</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
-    with tile2:
+    with m2:
+        flagged_pct = (total_flagged / total_dataset_rows * 100) if total_dataset_rows else 0.0
         st.markdown(
             f"""
             <div class="stat-tile">
-                <div class="stat-label">Consensus Agreement</div>
-                <div class="stat-value">{high_conf_count} High Confidence</div>
+                <div class="stat-label">Anomalies</div>
+                <div class="stat-value">{total_flagged:,}</div>
+                <div class="stat-sub">{flagged_pct:.2f}% anomaly rate</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with m3:
+        st.markdown(
+            f"""
+            <div class="stat-tile">
+                <div class="stat-label">High Confidence</div>
+                <div class="stat-value">{high_conf_count}</div>
                 <div class="stat-sub">≥2 methods agreed</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
-    with tile3:
-        tables_str = ", ".join([f"{t} ({cnt})" for t, cnt in affected_tables.items()]) if affected_tables else "None"
+    with m4:
         st.markdown(
             f"""
             <div class="stat-tile">
-                <div class="stat-label">Affected Tables</div>
-                <div class="stat-value">{len(affected_tables)} Tables</div>
-                <div class="stat-sub">{tables_str}</div>
+                <div class="stat-label">Possible</div>
+                <div class="stat-value">{possible_count}</div>
+                <div class="stat-sub">Single detector flag</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -123,14 +148,15 @@ def render_anomalies_tab():
         st.success("No statistical or business rule anomalies detected across loaded tables.")
         return
 
-    # Anomalies Table Display
+    # Results Table Display: Record, Column, Value, Method, Severity, Reason
     display_data = []
     for r in all_flagged_rows:
         display_data.append({
-            "Row ID": r["Row ID"],
-            "Table": r["Table"],
-            "Confidence": r["Confidence"],
-            "Methods": f"{r['Methods Agreed']} methods",
+            "Record": r["Record"],
+            "Column": r["Column"],
+            "Value": r["Value"],
+            "Method": r["Method"],
+            "Severity": r["Severity"],
             "Reason": r["Reason"],
         })
 
@@ -140,18 +166,24 @@ def render_anomalies_tab():
         use_container_width=True,
         column_config={
             "Reason": st.column_config.TextColumn("Reason", width="large"),
-            "Confidence": st.column_config.TextColumn("Confidence", width="medium"),
+            "Severity": st.column_config.TextColumn("Severity", width="medium"),
+            "Method": st.column_config.TextColumn("Method", width="medium"),
         },
         hide_index=True,
     )
 
-    # Inspect Full Row Expander
-    with st.expander("Inspect Anomalous Row Attributes", expanded=False):
-        row_options = [f"{r['Table']} • {r['Row ID']}" for r in all_flagged_rows]
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+
+    # Detailed Anomaly Record Inspector
+    with st.expander("Inspect Detailed Anomaly Record", expanded=False):
+        row_options = [f"{r['Table']} • {r['Record']} ({r['Severity']})" for r in all_flagged_rows]
         chosen = st.selectbox("Select anomalous record to inspect:", options=row_options)
         chosen_idx = row_options.index(chosen)
         selected_rec = all_flagged_rows[chosen_idx]["_full_record"]
-        # Format as clean 2-column key-value dataframe
+
+        st.markdown(f"**Explanation:** {all_flagged_rows[chosen_idx]['Reason']}")
+
+        # Format as 2-column key-value attribute table
         rec_df = pd.DataFrame([
             {"Attribute": k, "Value": str(v)}
             for k, v in selected_rec.items()

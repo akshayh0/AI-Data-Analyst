@@ -2,6 +2,7 @@
 
 import json
 import random
+import re
 import time
 from typing import Any, Dict, List, Optional
 from groq import APIConnectionError, APIError, Groq, InternalServerError, RateLimitError
@@ -152,10 +153,18 @@ class GroqProvider(LLMProvider):
                 except RateLimitError as rle:
                     last_error = rle
                     logger.warning(
-                        f"Groq rate limit (429) on '{attempt_model}' (attempt {attempt}/{self.max_retries}): {rle}"
+                        f"Groq rate limit (429) on '{attempt_model}' (attempt {attempt}/{self.max_retries}): {str(rle)[:160]}"
                     )
                     if attempt < self.max_retries:
-                        sleep_time = backoff_delay + random.uniform(0.5, 1.5)
+                        # Extract suggested wait time if provided by Groq
+                        wait_sec = 0.0
+                        m = re.search(r"try again in ([\d\.]+)\s*s", str(rle), re.IGNORECASE)
+                        if m:
+                            try:
+                                wait_sec = float(m.group(1)) + 1.0
+                            except Exception:
+                                pass
+                        sleep_time = min(max(backoff_delay + random.uniform(0.5, 1.5), wait_sec), 30.0)
                         logger.info(f"Sleeping for {sleep_time:.2f}s before retry...")
                         time.sleep(sleep_time)
                         backoff_delay *= 2.0
@@ -175,15 +184,46 @@ class GroqProvider(LLMProvider):
                 except APIError as api_err:
                     last_error = api_err
                     err_str = str(api_err).lower()
-                    if "tool_use_failed" in err_str or "tool" in err_str:
-                        logger.warning(f"Groq tool call formatting error: {api_err}. Retrying once...")
+
+                    # Handle case where Groq tool validator rejects a pseudo-tool call like {"name": "json", ...}
+                    if "tool_use_failed" in err_str or "attempted to call tool" in err_str:
+                        err_body = getattr(api_err, "body", None)
+                        if isinstance(err_body, dict):
+                            failed_gen = err_body.get("error", {}).get("failed_generation", "")
+                            if failed_gen:
+                                try:
+                                    parsed_fg = json.loads(failed_gen)
+                                    if isinstance(parsed_fg, dict):
+                                        if "arguments" in parsed_fg and isinstance(parsed_fg["arguments"], dict):
+                                            args = parsed_fg["arguments"]
+                                            if "answer" in args:
+                                                logger.info("Recovered structured answer from Groq pseudo-tool response.")
+                                                return LLMResponse(
+                                                    content=json.dumps(args),
+                                                    tool_calls=[],
+                                                    usage=TokenUsage(prompt_tokens=100, completion_tokens=50, total_tokens=150),
+                                                    model=attempt_model,
+                                                )
+                                        elif "answer" in parsed_fg:
+                                            logger.info("Recovered structured answer from Groq failed_generation JSON.")
+                                            return LLMResponse(
+                                                content=json.dumps(parsed_fg),
+                                                tool_calls=[],
+                                                usage=TokenUsage(prompt_tokens=100, completion_tokens=50, total_tokens=150),
+                                                model=attempt_model,
+                                            )
+                                except Exception:
+                                    pass
+
+                        logger.warning(f"Groq tool call formatting error (attempt {attempt}/{self.max_retries}). Retrying with guidance...")
                         if attempt == 1:
                             groq_msgs.append({
                                 "role": "user",
-                                "content": "Please format all tool arguments strictly as valid JSON.",
+                                "content": "DO NOT call any tool named 'json'. Output your final answer as regular text containing a valid JSON object matching the required schema.",
                             })
                             continue
-                    logger.error(f"Groq API error: {api_err}")
+
+                    logger.error(f"Groq API error: {str(api_err)[:200]}")
                     raise RuntimeError(f"Groq API error: {str(api_err)}") from api_err
 
         raise RuntimeError(

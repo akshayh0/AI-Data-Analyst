@@ -8,7 +8,7 @@ import pytest
 from app.data.loader import load_csv_file
 from app.ui.sidebar import detect_schema_join_keys
 from app.ui.theme import apply_datalens_chart_styling, get_datalens_plotly_template
-from scripts.live_smoke_test import SmokeTestMockProvider
+from app.llm.mock_provider import SmokeTestMockProvider
 
 SAMPLE_DATA_DIR = Path(__file__).resolve().parent.parent / "sample_data"
 
@@ -36,7 +36,7 @@ def test_apply_datalens_chart_styling():
     styled_fig = apply_datalens_chart_styling(fig)
 
     assert styled_fig.layout.paper_bgcolor == "#FFFFFF"
-    assert styled_fig.layout.font.family == "Inter, sans-serif"
+    assert styled_fig.layout.font.family == "Hanken Grotesk, sans-serif"
     assert styled_fig.layout.plot_bgcolor == "#FFFFFF"
 
 def test_smoke_test_mock_provider():
